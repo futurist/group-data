@@ -123,6 +123,7 @@ var stage2 = {
     // COL: '$bb.cc.color',
   },
   asdf: {$sum: '$bb.cc.qty'},
+  count: {$sum: 1},
 }
 
 
@@ -138,7 +139,9 @@ function v2(data, stage){
       Object.keys(accumObj).forEach(accum=>{
         const keyPath = accumObj[accum]
         // no match accum, skip
-        if(keyPath != _path) return
+        if(typeof keyPath=='string'
+          && keyPath[0] === '$'
+          && keyPath != _path) return
         const entry = getEntry(data, stage, v.path)
         switch( accum ) {
           case '$sum':
@@ -172,63 +175,24 @@ function getEntry (data, stage, currentPath){
   const _id = stage._id
   const keyNames = Object.keys(_id)
   
+  // new entry
+  const newEntry = {_id:{}}
+  keyNames.forEach(key=>{
+    newEntry._id[key] = getDataInPath(data, currentPath, _id[key])
+  })
+
   var entry = result.find(entry=>{
     return keyNames.every(
-      key=>entry._id[key] == getDataInPath(data, currentPath, _id[key])
+      key=>entry._id[key] === newEntry._id[key]
     )
   })
   if(entry==null){
-    // new entry
-    entry = {_id:{}}
-    keyNames.forEach(key=>{
-      entry._id[key] = getDataInPath(data, currentPath, _id[key])
-    })
+    entry = newEntry
     result.push(entry)
   }
   return entry
 }
 
-function v1(data, stage) {
-  _.visit(data, v=>{
-    const _path = toStagePath(v.path, v.key)
-    console.log(v.path, v.key, _path)
-    const cond = stage._id[_path]
-    if( cond ) {
-      v.val.forEach(data=>{
-
-        const indexKeys = Object.keys(cond)
-        var entry = result.find(entry=>{
-          return indexKeys.every(
-            key=>entry._id[cond[key]] == data[key]
-          )
-        })
-        if(entry==null){
-          // new entry
-          entry = {_id:{}}
-          indexKeys.forEach(key=>{
-            entry._id[cond[key]] = data[key]
-          })
-          result.push(entry)
-        }
-
-        for(let i in stage){
-          if(i=='_id') continue
-          const accumObj = stage[i]
-          Object.keys(accumObj).forEach(accum=>{
-            const key = accumObj[accum]
-            switch( accum ) {
-              case '$sum':
-              if(!(i in entry)) entry[i] = 0
-              entry[i] += data[key]
-              break
-            }
-          })
-        }
-
-      })
-    }
-  })
-}
 console.log(result)
 
 function toStagePath(path, name){
