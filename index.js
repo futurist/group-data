@@ -124,11 +124,11 @@ var stage2 = {
   bb: {$addToSet: '$bb.bb'},
 }
 
-// data2={a:{b:2}, c:3, d:4}
-// stage2={
-//   $unwind: '$a',
-//   _id:{c:'$a.b'}
-// }
+data2={a:{b:2}, c:3, d:4}
+stage2={
+  // $unwind: '$a',
+  _id:{c:'$c'}
+}
 
 var result = []
 
@@ -138,7 +138,8 @@ function v2(data, stage){
     const _path = toStagePath(data, v.path, v.key)
     // return console.log('-----', v.val, v.path, _path, currentPath)
 
-    if(_path != stage.$unwind) return
+    const $unwind = stage.$unwind
+    if($unwind && _path != $unwind) return
     const entry = getEntry(data, stage, currentPath)
     if(!entry) return
 
