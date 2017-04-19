@@ -94,7 +94,7 @@ var data2 = {
     }, {
       "item": "aa",
       "color": "1",
-      "qty": 32,
+      // "qty": 32,
       // x:{y:1}
     }, {
       "item": "aa",
@@ -117,7 +117,7 @@ var stage2 = {
     COL: '$bb.cc.color',
   },
   // _id: null,
-  asdf: {$avg: '$bb.cc.qty'},
+  asdf: {$min: '$bb.cc.qty'},
   // count: {$sum: 1},
   count2: {$sum: 1, $ensure: ['$bb.cc.qty']},
   aa: {$push: '$bb.bb'},
@@ -230,6 +230,8 @@ var arrayObj = {
     defineProperty(arr, '_count', {value: this._count})
     defineProperty(arr, '_sum', {value: this._sum})
     defineProperty(arr, '_avg', {value: this._avg})
+    defineProperty(arr, '_min', {value: this._min})
+    defineProperty(arr, '_max', {value: this._max})
     defineProperty(arr, 'valueOf', {value: this[method]})
     defineProperty(arr, 'toString', {value: this.toString})
     defineProperty(arr, 'toJSON', {value: this[method]})
@@ -245,7 +247,7 @@ var arrayObj = {
     return this._sum() / this._count()
   },
   _min: function() {
-    return Math.max.apply(null, this._getArray())
+    return Math.min.apply(null, this._getArray())
   },
   _max: function() {
     return Math.max.apply(null, this._getArray())
@@ -274,6 +276,11 @@ var arrayObj = {
   $min: function(skipNull) {
     var arr = []
     this._addProp(arr, '_min', skipNull)
+    return arr
+  },
+  $max: function(skipNull) {
+    var arr = []
+    this._addProp(arr, '_max', skipNull)
     return arr
   },
 
