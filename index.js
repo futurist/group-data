@@ -129,7 +129,8 @@ var stage2 = {
   },
   // _id: null,
   asdf: {$sum: '$bb.cc.qty'},
-  count: {$sum: 1}
+  count: {$sum: 1},
+  count2: {$sum: 1.5},
 }
 
 
@@ -156,9 +157,9 @@ function v2(data, stage){
           if(!(i in entry)) entry[i] = 0
           if(typeof keyPath=='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i] += arr[0]|0
+            entry[i] += arr[0]
           } else if(typeof keyPath == 'number') {
-            entry[i] += keyPath|0
+            entry[i] += keyPath
           }
           break
         }
