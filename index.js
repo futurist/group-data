@@ -124,16 +124,21 @@ var stage2 = {
   bb: {$addToSet: '$bb.bb'},
 }
 
+// data2={a:{b:2}, c:3, d:4}
+// stage2={
+//   $unwind: '$a',
+//   _id:{c:'$a.b'}
+// }
 
 var result = []
 
 function v2(data, stage){
   _.visit(data, v=>{
+    const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
-    // return console.log('-----', v.val, v.path, _path)
+    // return console.log('-----', v.val, v.path, _path, currentPath)
 
     if(_path != stage.$unwind) return
-    const currentPath = v.path.concat(v.key)
     const entry = getEntry(data, stage, currentPath)
     if(!entry) return
 
@@ -186,13 +191,14 @@ function getDataInPath(data, currentPath, targetPath) {
   let path = targetPath.slice(1).split('.')
   let curPath = currentPath.slice()
   let cur
+  let provide = true
   while(cur=path.shift()) {
-    curPath.shift()
+    if(curPath.shift()!=cur) provide= false
     if(typeof data !== 'object' || !(cur in data)) {
       return [null, 1]
     }
     data = data[cur]
-    while(Array.isArray(data)) {
+    while(provide && Array.isArray(data)) {
       data = data[curPath.shift()]
     }
   }
