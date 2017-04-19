@@ -117,7 +117,7 @@ var stage2 = {
     COL: '$bb.cc.color',
   },
   // _id: null,
-  asdf: {$sum: '$bb.cc.qty'},
+  asdf: {$avg: '$bb.cc.qty'},
   // count: {$sum: 1},
   count2: {$sum: 1, $ensure: ['$bb.cc.qty']},
   aa: {$push: '$bb.bb'},
@@ -167,7 +167,16 @@ function v2(data, stage){
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             entry[i].push(arr[0])
-          } else if(type === 'number') {
+          } else {
+            entry[i].push(keyPath)
+          }
+          break
+          case '$avg':
+          if(!(i in entry)) entry[i] = arrayObj.$avg(true)
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i].push(arr[0])
+          } else {
             entry[i].push(keyPath)
           }
           break
@@ -193,23 +202,47 @@ function v2(data, stage){
 }
 
 var arrayObj = {
-  $sum: function(){
+  _sum: function() {
+    return this.reduce((prev, cur)=>{
+      return typeof cur=='number' && !isNaN(cur)
+        ? prev + cur
+        : prev
+    }, 0)
+  },
+  _avg: function() {
+    return this._sum() / this._count()
+  },
+  _count: function() {
+    return !this._skipNull
+      ? this.length
+      : this.filter(v=>v!=null).length
+  },
+  $sum: function() {
     var arr = []
-    var getData = function(isString){
-      return this.reduce((prev, cur)=>{
-        return typeof cur=='number' && !isNaN(cur)
-          ? prev + cur
-          : prev
-      }, 0)
+    var toString = function() {
+      return String(this._sum())
     }
-    var toString = function(){
-      return String(getData.apply(this))
-    }
-    Object.defineProperty(arr, 'valueOf', {value: getData})
+    Object.defineProperty(arr, '_sum', {value: this._sum})
+    Object.defineProperty(arr, 'valueOf', {value: this._sum})
     Object.defineProperty(arr, 'toString', {value: toString})
-    Object.defineProperty(arr, 'toJSON', {value: getData})
+    Object.defineProperty(arr, 'toJSON', {value: this._sum})
+    return arr
+  },
+  $avg: function(skipNull) {
+    var arr = []
+    var toString = function() {
+      return String(this._avg())
+    }
+    Object.defineProperty(arr, '_skipNull', {value: skipNull})
+    Object.defineProperty(arr, '_count', {value: this._count})
+    Object.defineProperty(arr, '_sum', {value: this._sum})
+    Object.defineProperty(arr, 'valueOf', {value: this._avg})
+    Object.defineProperty(arr, 'toString', {value: toString})
+    Object.defineProperty(arr, 'toJSON', {value: this._avg})
     return arr
   }
+
+
 }
 
 function $addToSet(arr, item) {
