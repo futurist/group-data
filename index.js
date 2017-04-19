@@ -119,16 +119,16 @@ var stage2 = {
   // _id: null,
   asdf: {$sum: '$bb.cc.qty'},
   // count: {$sum: 1},
-  count2: {$sum: 1.5},
+  count2: {$sum: 1, $ensure: ['$bb.cc.qty']},
   aa: {$push: '$bb.bb'},
   bb: {$addToSet: '$bb.bb'},
 }
 
-data2={a:{b:2}, c:3, d:4}
-stage2={
-  // $unwind: '$a',
-  _id:{c:'$c'}
-}
+// data2={a:{b:2}, c:3, d:4}
+// stage2={
+//   // $unwind: '$a',
+//   _id:{c:'$c'}
+// }
 
 var result = []
 
@@ -146,8 +146,19 @@ function v2(data, stage){
     for(let i in stage) {
       if(i==='_id') continue
       const accumObj = stage[i]
+      if(!accumObj || typeof accumObj!='object') continue
       Object.keys(accumObj).forEach(accum=>{
         const keyPath = accumObj[accum]
+        const $ensure = accumObj.$ensure
+
+        // $ensure check for exists
+        if(Array.isArray($ensure)){
+          if($ensure.some(v=>{
+            return getDataInPath(data, currentPath, v)[1]
+          })){
+            return
+          }
+        }
         const type = typeof keyPath
         // no match accum, skip
         switch( accum ) {
