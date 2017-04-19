@@ -128,6 +128,7 @@ var stage2 = {
     COL: '$bb.cc.color',
   },
   asdf: {$sum: '$bb.cc.qty'},
+  count: {$sum: 1}
 }
 
 
@@ -135,13 +136,13 @@ var result = []
 
 function v2(data, stage){
   _.visit(data, v=>{
-    const [_parentPath, _path] = toStagePath(data, v.path, v.key)
+    const _path = toStagePath(data, v.path, v.key)
     // return console.log('-----', v.val, v.path, _path)
 
-    const $unwind = stage.$unwind
-    // for sum:1, using _parentPath,
-    // for sum: 'qty', using _path (current path)
-    if(_parentPath != $unwind) return
+    if(_path != stage.$unwind) return
+    const currentPath = v.path.concat(v.key)
+    const entry = getEntry(data, stage, currentPath)
+    if(!entry) return
 
     for(let i in stage) {
       if(i==='_id') continue
@@ -149,14 +150,14 @@ function v2(data, stage){
       Object.keys(accumObj).forEach(accum=>{
         const keyPath = accumObj[accum]
         // no match accum, skip
-        const entry = getEntry(data, stage, v.path)
-        if(!entry) return
         switch( accum ) {
           case '$sum':
           if(!(i in entry)) entry[i] = 0
-          if(typeof keyPath=='string' && keyPath === _path) {
-            entry[i] += v.val
-            entry['$count'] = (entry['$count']|0)+1
+          if(typeof keyPath=='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i] += arr[0]|0
+          } else if(typeof keyPath == 'number') {
+            entry[i] += keyPath|0
           }
           break
         }
@@ -175,8 +176,9 @@ function getDataInPath(data, currentPath, targetPath) {
   let cur
   while(cur=path.shift()) {
     curPath.shift()
-    // if(curPath.shift() != cur) return [null, 1]
-    if(typeof data !== 'object' || !(cur in data)) return [null, 1]
+    if(typeof data !== 'object' || !(cur in data)) {
+      return [null, 1]
+    }
     data = data[cur]
     while(Array.isArray(data)) {
       data = data[curPath.shift()]
@@ -232,17 +234,19 @@ function toStagePath(data, path, name){
       data = data[path[++i]]
     }
   }
-  if(Array.isArray(parent)) {
-    // console.log(p.concat('$').join())
-    var parentPath = '$'+p.concat('$').join('.')
-  } else {
-    var parentPath = '$'+p.join('.')
-  }
+
+  // if(Array.isArray(parent)) {
+  //   // console.log(p.concat('$').join())
+  //   var parentPath = '$'+p.concat('$').join('.')
+  // } else {
+  //   var parentPath = '$'+p.join('.')
+  // }
 
   if(Array.isArray(data)) p.push('$')
   else p.push(name)
 
-  return [parentPath, '$'+p.join('.')]
+  // return [parentPath, '$'+p.join('.')]
+  return '$'+p.join('.')
 }
 
 function isParent (path) {
