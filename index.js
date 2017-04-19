@@ -163,12 +163,12 @@ function v2(data, stage){
         // no match accum, skip
         switch( accum ) {
           case '$sum':
-          if(!(i in entry)) entry[i] = 0
+          if(!(i in entry)) entry[i] = arrayObj.$sum()
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i] += arr[0]||0
+            entry[i].push(arr[0])
           } else if(type === 'number') {
-            entry[i] += keyPath||0
+            entry[i].push(keyPath)
           }
           break
           case '$push':
@@ -182,7 +182,7 @@ function v2(data, stage){
           if(!(i in entry)) entry[i] = []
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
-            addToSet(entry[i], arr[0])
+            $addToSet(entry[i], arr[0])
           }
           break
         }
@@ -192,9 +192,27 @@ function v2(data, stage){
   })
 }
 
-v2(data2, stage2)
+var arrayObj = {
+  $sum: function(){
+    var arr = []
+    var getData = function(isString){
+      return this.reduce((prev, cur)=>{
+        return typeof cur=='number' && !isNaN(cur)
+          ? prev + cur
+          : prev
+      }, 0)
+    }
+    var toString = function(){
+      return String(getData.apply(this))
+    }
+    Object.defineProperty(arr, 'valueOf', {value: getData})
+    Object.defineProperty(arr, 'toString', {value: toString})
+    Object.defineProperty(arr, 'toJSON', {value: getData})
+    return arr
+  }
+}
 
-function addToSet(arr, item) {
+function $addToSet(arr, item) {
   if(arr.indexOf(item)<0) arr.push(item)
 }
 
@@ -250,8 +268,6 @@ function getEntry (data, stage, currentPath){
   return entry
 }
 
-console.log(result)
-
 function toStagePath(data, path, name){
   // return is array: [parentPath, currentPath]
   var p = []
@@ -287,4 +303,9 @@ function isParent (path) {
 function isParentArray (subArr, parentArr) {
   return subArr.slice(0, -1).join() === parentArr.join()
 }
+
+v2(data2, stage2)
+console.log( result)
+
+
 
