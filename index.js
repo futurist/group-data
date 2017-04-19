@@ -109,17 +109,6 @@ var data2 = {
 
 var _ = require('objutil')
 
-var map = new Map()
-
-var stage00 = {
-  _id: {
-    '$goods.person1': {
-      item: 'ITEM',
-      color: 'COL'
-    }
-  },
-  asdf: {$sum: 'qty'},
-}
 
 var stage2 = {
   $unwind: '$bb.cc.$',
@@ -131,6 +120,8 @@ var stage2 = {
   asdf: {$sum: '$bb.cc.qty'},
   // count: {$sum: 1},
   count2: {$sum: 1.5},
+  aa: {$push: '$bb.bb'},
+  bb: {$addToSet: '$bb.bb'},
 }
 
 
@@ -151,15 +142,30 @@ function v2(data, stage){
       const accumObj = stage[i]
       Object.keys(accumObj).forEach(accum=>{
         const keyPath = accumObj[accum]
+        const type = typeof keyPath
         // no match accum, skip
         switch( accum ) {
           case '$sum':
           if(!(i in entry)) entry[i] = 0
-          if(typeof keyPath=='string') {
+          if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             entry[i] += arr[0]||0
-          } else if(typeof keyPath == 'number') {
+          } else if(type === 'number') {
             entry[i] += keyPath||0
+          }
+          break
+          case '$push':
+          if(!(i in entry)) entry[i] = []
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i].push(arr[0])
+          }
+          break
+          case '$addToSet':
+          if(!(i in entry)) entry[i] = []
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            addToSet(entry[i], arr[0])
           }
           break
         }
@@ -170,6 +176,10 @@ function v2(data, stage){
 }
 
 v2(data2, stage2)
+
+function addToSet(arr, item) {
+  if(arr.indexOf(item)<0) arr.push(item)
+}
 
 function getDataInPath(data, currentPath, targetPath) {
   // console.log(currentPath, targetPath)
