@@ -201,6 +201,7 @@ function v2(data, stage){
   })
 }
 
+var defineProperty = Object.defineProperty
 var arrayObj = {
   _sum: function() {
     return this.reduce((prev, cur)=>{
@@ -222,10 +223,10 @@ var arrayObj = {
     var toString = function() {
       return String(this._sum())
     }
-    Object.defineProperty(arr, '_sum', {value: this._sum})
-    Object.defineProperty(arr, 'valueOf', {value: this._sum})
-    Object.defineProperty(arr, 'toString', {value: toString})
-    Object.defineProperty(arr, 'toJSON', {value: this._sum})
+    defineProperty(arr, '_sum', {value: this._sum})
+    defineProperty(arr, 'valueOf', {value: this._sum})
+    defineProperty(arr, 'toString', {value: toString})
+    defineProperty(arr, 'toJSON', {value: this._sum})
     return arr
   },
   $avg: function(skipNull) {
@@ -233,15 +234,14 @@ var arrayObj = {
     var toString = function() {
       return String(this._avg())
     }
-    Object.defineProperty(arr, '_skipNull', {value: skipNull})
-    Object.defineProperty(arr, '_count', {value: this._count})
-    Object.defineProperty(arr, '_sum', {value: this._sum})
-    Object.defineProperty(arr, 'valueOf', {value: this._avg})
-    Object.defineProperty(arr, 'toString', {value: toString})
-    Object.defineProperty(arr, 'toJSON', {value: this._avg})
+    defineProperty(arr, '_skipNull', {value: skipNull})
+    defineProperty(arr, '_count', {value: this._count})
+    defineProperty(arr, '_sum', {value: this._sum})
+    defineProperty(arr, 'valueOf', {value: this._avg})
+    defineProperty(arr, 'toString', {value: toString})
+    defineProperty(arr, 'toJSON', {value: this._avg})
     return arr
   }
-
 
 }
 
