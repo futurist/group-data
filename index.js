@@ -1,159 +1,27 @@
-var data00 = {
-  "_id": "86b2a5aa-6b0e-4043-8d8d-1f5f3fdb74b9",
-  "goods": [
-    {
-      "person1": [{
-          "item": "bb",
-          "color": "1",
-          "qty": 23
-        }],
-    },
-    {
-      abc: {abc: 23},
-      "person1": [{
-          "item": "bb",
-          "color": "1",
-          "qty": 23
-        },
-        {
-          "item": "bb",
-          "color": "2",
-          "qty": 24
-        },
-        {
-          "item": "bb",
-          "color": "1",
-          "qty": 34
-        },
-        {
-          "item": "aa",
-          "color": "2",
-          "qty": 54
-        }
-      ]
-    },
-    {
-      "person2": [{
-          "item": "aa",
-          "color": "1",
-          "qty": 23
-        },
-        {
-          "item": "aa",
-          "color": "2",
-          "qty": 223
-        },
-        {
-          "item": "aa",
-          "color": "1",
-          "qty": 32
-        },
-        {
-          "item": "aa",
-          "color": "2",
-          "qty": 23
-        }
-      ]
-    }
-  ]
-}
-
-
-var data2 = [{
-  "id": "86b2a5aa-6b0e-4043-8d8d-1f5f3fdb74b9",
-  "type": "form_aweawe",
-  "bb": [{
-    "bb": "bb",
-    "cc": [{
-      "item": "bb",
-      "color": "3",
-      "qty": 23
-    }, {
-      "item": "bb",
-      "color": "2",
-      "qty": 23
-    }, {
-      "item": "bb",
-      "color": "3",
-      "qty": 34
-    }, {
-      "item": "aa",
-      "color": "2",
-      "qty": 54
-    }]
-  }, {
-    "bb": "aa",
-    "cc": [{
-      "item": "aa",
-      "color": "1",
-      "qty": 23
-    }, {
-      "item": "aa",
-      "color": "2",
-      "qty": 223
-    }, {
-      "item": "aa",
-      "color": "1",
-      "qty": 32,
-      x:{y:1}
-    }, {
-      "item": "aa",
-      "color": "2",
-      "qty": 23
-    },
-    {c: {d: 1}}
-    ],
-    c:{b:{d:2}}
-  }]
-}]
 
 var _ = require('objutil')
-
-
-var stage2 = {
-  $unwind: '$$.bb.$.cc.$',
-  _id: {
-    ITEM: '$$.bb.$.cc.$.item',
-    COL: '$$.bb.$.cc.$.color',
-  },
-  // _id: null,
-  min: {$min: '$$.bb.$.cc.$.qty'},
-  max: {$max: '$$.bb.$.cc.$.qty'},
-  avg: {$avg: '$$.bb.$.cc.$.qty'},
-  sum: {$sum: '$$.bb.$.cc.$.qty'},
-  first: {$first: '$$.bb.$.cc.$.qty'},
-  last: {$last: '$$.bb.$.cc.$.qty'},
-  // count: {$sum: 1},
-  count2: {$sum: 1, $ensure: ['$$.bb.$.cc.$.qty']},
-  aa: {$push: '$$.bb.$.bb'},
-  bb: {$addToSet: '$$.bb.$.bb'},
-}
-
-// data2={a:{b:2}, c:3, d:4}
-// stage2={
-//   // $unwind: '$a',
-//   _id:{c:'$c'}
-// }
 
 var resultObj = {}
 
 // create each level of path in resultObj
 function createResultObj(data, path) {
   for(let i=0; i<path.length; i++) {
-    data = data[path[i]]
     if(Array.isArray(data)) {
-      let _path = path.slice(0,i+1).join('.')
+      let _path = path.slice(0,i).join('.')
       resultObj[_path] = resultObj[_path] || []
     }
+    data = data[path[i]]
+    // console.log(data)
   }
 }
 
-function groupData(data, stage){
+function groupData(data, stage) {
+  resultObj = {}
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
 
-    console.log('-----', _path, currentPath)
+    // console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
 
@@ -226,6 +94,8 @@ function groupData(data, stage){
         })
       }
   })
+
+  return resultObj
 }
 
 function arrayObjectProp (method, options) {
@@ -361,10 +231,12 @@ function toStagePath(data, path, name){
   return '$'+p.join('.')
 }
 
-groupData(data2, stage2)
+// var util=require('util')
+// console.log(util.inspect(groupData(data2, stage2).valueOf(), {depth:null}))
+// groupData(data2, stage2)
 
-var util=require('util')
-console.log( util.inspect(resultObj, {depth:null}) )
+// // console.log( util.inspect(resultObj, {depth:null}) )
+// console.log( JSON.stringify(groupData(data2, stage2), null, 2) )
 
 module.exports = groupData
 
