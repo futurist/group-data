@@ -137,7 +137,10 @@ function v2(data, stage){
     const [_parentPath, _path] = toStagePath(data, v.path, v.key)
     // return console.log('-----', v.val, v.path, _path)
 
-    if(_path != stage.$unwind) return
+    const $unwind = stage.$unwind
+    // for sum:1, using _parentPath,
+    // for sum: 'qty', using _path (current path)
+    if(_parentPath != $unwind && _path!=$unwind) return
 
     for(let i in stage) {
       if(i==='_id') continue
@@ -146,12 +149,13 @@ function v2(data, stage){
         const keyPath = accumObj[accum]
         // no match accum, skip
         const entry = getEntry(data, stage, v.path)
+        if(!entry) return
         switch( accum ) {
           case '$sum':
           if(!(i in entry)) entry[i] = 0
-          if(keyPath === _path) {
+          if(typeof keyPath=='string' && keyPath === _path) {
             entry[i] += v.val
-          } else if (typeof keyPath=='number'){
+          } else if (typeof keyPath=='number' && _path===$unwind){
             entry[i] += keyPath
           }
           break
@@ -170,12 +174,13 @@ function getDataInPath(data, currentPath, targetPath) {
   let cur
   while(cur=path.shift()) {
     curPath.shift()
+    if(!(cur in data)) return [null, 1]
     data = data[cur]
     if(Array.isArray(data)) {
       data = data[curPath.shift()]
     }
   }
-  return data
+  return [data]
 }
 
 function getEntry (data, stage, currentPath){
@@ -185,7 +190,9 @@ function getEntry (data, stage, currentPath){
   // new entry
   const newEntry = {_id:{}}
   keyNames.forEach(key=>{
-    newEntry._id[key] = getDataInPath(data, currentPath, _id[key])
+    const arr = getDataInPath(data, currentPath, _id[key])
+    if(arr[1]) return
+    newEntry._id[key] = arr[0]
   })
 
   var entry = result.find(entry=>{
