@@ -94,12 +94,14 @@ var data2 = {
     }, {
       "item": "aa",
       "color": "1",
-      "qty": 32
+      "qty": 32,
+      // x:{y:1}
     }, {
       "item": "aa",
       "color": "2",
       "qty": 23
-    }]
+    }],
+    c:{b:{d:2}}
   }]
 }
 
@@ -118,6 +120,7 @@ var stage00 = {
 }
 
 var stage2 = {
+  $unwind: '$bb.cc.$',
   _id: {
     ITEM: '$bb.bb',
     // COL: '$bb.cc.color',
@@ -131,22 +134,26 @@ var result = []
 
 function v2(data, stage){
   _.visit(data, v=>{
-    const _path = toStagePath(v.path, v.key)
+    const [_parentPath, _path] = toStagePath(data, v.path, v.key)
+    // return console.log('-----', v.val, v.path, _path)
 
-    for(let i in stage){
+    if(_path != stage.$unwind) return
+
+    for(let i in stage) {
       if(i==='_id') continue
       const accumObj = stage[i]
       Object.keys(accumObj).forEach(accum=>{
         const keyPath = accumObj[accum]
         // no match accum, skip
-        if(typeof keyPath=='string'
-          && keyPath[0] === '$'
-          && keyPath != _path) return
         const entry = getEntry(data, stage, v.path)
         switch( accum ) {
           case '$sum':
           if(!(i in entry)) entry[i] = 0
-          entry[i] += v.val
+          if(keyPath === _path) {
+            entry[i] += v.val
+          } else if (typeof keyPath=='number'){
+            entry[i] += keyPath
+          }
           break
         }
       })
@@ -195,13 +202,30 @@ function getEntry (data, stage, currentPath){
 
 console.log(result)
 
-function toStagePath(path, name){
+function toStagePath(data, path, name){
+  // return is array: [parentPath, currentPath]
   var p = []
-  for(var i=0; i< path.length; i+=2) {
+  var parent
+  for(var i=0; i< path.length; i++) {
     p.push(path[i])
+    parent = data
+    data = data[path[i]]
+    while(i< path.length-1 && Array.isArray(data)) {
+      parent = data
+      data = data[path[++i]]
+    }
   }
-  p.push(name)
-  return '$'+p.join('.')
+  if(Array.isArray(parent)) {
+    // console.log(p.concat('$').join())
+    var parentPath = '$'+p.concat('$').join('.')
+  } else {
+    var parentPath = '$'+p.join('.')
+  }
+
+  if(Array.isArray(data)) p.push('$')
+  else p.push(name)
+
+  return [parentPath, '$'+p.join('.')]
 }
 
 function isParent (path) {
