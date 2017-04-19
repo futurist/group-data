@@ -94,7 +94,7 @@ var data2 = {
     }, {
       "item": "aa",
       "color": "1",
-      // "qty": 32,
+      "qty": 32,
       // x:{y:1}
     }, {
       "item": "aa",
@@ -132,7 +132,7 @@ var stage2 = {
 
 var result = []
 
-function v2(data, stage){
+function groupData(data, stage){
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
@@ -337,8 +337,9 @@ function isParentArray (subArr, parentArr) {
   return subArr.slice(0, -1).join() === parentArr.join()
 }
 
-v2(data2, stage2)
+groupData(data2, stage2)
 console.log( result)
 
+module.exports = groupData
 
 
