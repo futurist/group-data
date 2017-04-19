@@ -59,7 +59,7 @@ var data00 = {
 }
 
 
-var data2 = {
+var data2 = [{
   "id": "86b2a5aa-6b0e-4043-8d8d-1f5f3fdb74b9",
   "type": "form_aweawe",
   "bb": [{
@@ -105,28 +105,28 @@ var data2 = {
     ],
     c:{b:{d:2}}
   }]
-}
+}]
 
 var _ = require('objutil')
 
 
 var stage2 = {
-  $unwind: '$bb.cc.$',
+  $unwind: '$$.bb.$.cc.$',
   _id: {
-    ITEM: '$bb.cc.item',
-    COL: '$bb.cc.color',
+    ITEM: '$$.bb.$.cc.$.item',
+    COL: '$$.bb.$.cc.$.color',
   },
   // _id: null,
-  min: {$min: '$bb.cc.qty'},
-  max: {$max: '$bb.cc.qty'},
-  avg: {$avg: '$bb.cc.qty'},
-  sum: {$sum: '$bb.cc.qty'},
-  first: {$first: '$bb.cc.qty'},
-  last: {$last: '$bb.cc.qty'},
+  min: {$min: '$$.bb.$.cc.$.qty'},
+  max: {$max: '$$.bb.$.cc.$.qty'},
+  avg: {$avg: '$$.bb.$.cc.$.qty'},
+  sum: {$sum: '$$.bb.$.cc.$.qty'},
+  first: {$first: '$$.bb.$.cc.$.qty'},
+  last: {$last: '$$.bb.$.cc.$.qty'},
   // count: {$sum: 1},
-  count2: {$sum: 1, $ensure: ['$bb.cc.qty']},
-  aa: {$push: '$bb.bb'},
-  bb: {$addToSet: '$bb.bb'},
+  count2: {$sum: 1, $ensure: ['$$.bb.$.cc.$.qty']},
+  aa: {$push: '$$.bb.$.bb'},
+  bb: {$addToSet: '$$.bb.$.bb'},
 }
 
 // data2={a:{b:2}, c:3, d:4}
@@ -153,9 +153,9 @@ function groupData(data, stage){
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
 
+    console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
-    console.log('-----', toStagePath(data, v.path), v.path, _path, currentPath)
 
     createResultObj(data, currentPath)
 
@@ -283,16 +283,14 @@ function getDataInPath(data, currentPath, targetPath) {
   let path = targetPath.slice(1).split('.')
   let curPath = currentPath.slice()
   let cur
-  let provide = true
+  let provide
   while(cur=path.shift()) {
-    if(curPath.shift()!=cur) provide= false
+    provide = curPath.shift()
+    if(cur=='$') cur = provide
     if(typeof data !== 'object' || !(cur in data)) {
       return [null, 1]
     }
     data = data[cur]
-    while(provide && Array.isArray(data)) {
-      data = data[curPath.shift()]
-    }
   }
   return [data]
 }
@@ -339,13 +337,12 @@ function toStagePath(data, path, name){
   var p = []
   var parent
   for(var i=0; i< path.length; i++) {
-    p.push(path[i])
+    p.push(Array.isArray(data)
+      ? '$'
+      : path[i]
+    )
     parent = data
     data = data[path[i]]
-    while(i< path.length-1 && Array.isArray(data)) {
-      parent = data
-      data = data[path[++i]]
-    }
   }
 
   // if(Array.isArray(parent)) {
@@ -362,14 +359,6 @@ function toStagePath(data, path, name){
 
   // return [parentPath, '$'+p.join('.')]
   return '$'+p.join('.')
-}
-
-function isParent (path) {
-  return path.length % 2 === 1
-}
-
-function isParentArray (subArr, parentArr) {
-  return subArr.slice(0, -1).join() === parentArr.join()
 }
 
 groupData(data2, stage2)
