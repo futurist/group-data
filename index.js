@@ -66,7 +66,7 @@ var data2 = {
     "bb": "bb",
     "cc": [{
       "item": "bb",
-      "color": "1",
+      "color": "3",
       "qty": 23
     }, {
       "item": "bb",
@@ -99,7 +99,7 @@ var data2 = {
     }, {
       "item": "aa",
       "color": "2",
-      // "qty": 23
+      "qty": 23
     },
     {c: {d: 1}}
     ],
@@ -140,7 +140,8 @@ var resultObj = {}
 // create each level of path in resultObj
 function createResultObj(data, path) {
   for(let i=0; i<path.length; i++) {
-    if(Array.isArray(data[path[i]])) {
+    data = data[path[i]]
+    if(Array.isArray(data)) {
       let _path = path.slice(0,i+1).join('.')
       resultObj[_path] = resultObj[_path] || []
     }
@@ -156,11 +157,12 @@ function groupData(data, stage){
     if($unwind && _path != $unwind) return
     console.log('-----', toStagePath(data, v.path), v.path, _path, currentPath)
 
-    createResultObj(data, v.path)
+    createResultObj(data, currentPath)
 
     const entries = getEntry(data, stage, currentPath)
     if(!entries) return
     entries.forEach(entry=>{
+      if(!entry) return
       for(let i in stage) {
         if(i==='_id') continue
         const accumObj = stage[i]
@@ -314,7 +316,8 @@ function getEntry (data, stage, currentPath){
     return
   }
 
-  Object.keys(resultObj).map(g=>{
+  return Object.keys(resultObj).map(g=>{
+    // console.log(currentPath, g, 9999)
     if( currentPath.join('.').indexOf(g) !== 0 ) return
     const result = resultObj[g]
     var entry = result.find(entry=>{
@@ -323,7 +326,7 @@ function getEntry (data, stage, currentPath){
       )
     })
     if(entry==null) {
-      entry = newEntry
+      entry = _.merge({}, newEntry)
       result.push(entry)
     }
     return entry
