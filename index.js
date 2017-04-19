@@ -180,6 +180,24 @@ function groupData(data, stage){
             entry[i].push(keyPath)
           }
           break
+          case '$max':
+          if(!(i in entry)) entry[i] = arrayObj.$max(true)
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i].push(arr[0])
+          } else {
+            entry[i].push(keyPath)
+          }
+          break
+          case '$min':
+          if(!(i in entry)) entry[i] = arrayObj.$min(true)
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i].push(arr[0])
+          } else {
+            entry[i].push(keyPath)
+          }
+          break
           case '$push':
           if(!(i in entry)) entry[i] = []
           if(type==='string') {
@@ -203,6 +221,19 @@ function groupData(data, stage){
 
 var defineProperty = Object.defineProperty
 var arrayObj = {
+  toString: function() {
+    return String(this.valueOf())
+  },
+  _addProp: function(arr, method, skipNull) {
+    defineProperty(arr, '_skipNull', {value: skipNull})
+    defineProperty(arr, '_getArray', {value: this._getArray})
+    defineProperty(arr, '_count', {value: this._count})
+    defineProperty(arr, '_sum', {value: this._sum})
+    defineProperty(arr, '_avg', {value: this._avg})
+    defineProperty(arr, 'valueOf', {value: this[method]})
+    defineProperty(arr, 'toString', {value: this.toString})
+    defineProperty(arr, 'toJSON', {value: this[method]})
+  },
   _sum: function() {
     return this.reduce((prev, cur)=>{
       return typeof cur=='number' && !isNaN(cur)
@@ -213,35 +244,38 @@ var arrayObj = {
   _avg: function() {
     return this._sum() / this._count()
   },
-  _count: function() {
-    return !this._skipNull
-      ? this.length
-      : this.filter(v=>v!=null).length
+  _min: function() {
+    return Math.max.apply(null, this._getArray())
   },
-  $sum: function() {
+  _max: function() {
+    return Math.max.apply(null, this._getArray())
+  },
+  _avg: function() {
+    return this._sum() / this._count()
+  },
+  _count: function() {
+    return this._getArray().length
+  },
+  _getArray: function() {
+    return !this._skipNull
+      ? this
+      : this.filter(v=>v!=null)
+  },
+  $sum: function(skipNull) {
     var arr = []
-    var toString = function() {
-      return String(this._sum())
-    }
-    defineProperty(arr, '_sum', {value: this._sum})
-    defineProperty(arr, 'valueOf', {value: this._sum})
-    defineProperty(arr, 'toString', {value: toString})
-    defineProperty(arr, 'toJSON', {value: this._sum})
+    this._addProp(arr, '_sum', skipNull)
     return arr
   },
   $avg: function(skipNull) {
     var arr = []
-    var toString = function() {
-      return String(this._avg())
-    }
-    defineProperty(arr, '_skipNull', {value: skipNull})
-    defineProperty(arr, '_count', {value: this._count})
-    defineProperty(arr, '_sum', {value: this._sum})
-    defineProperty(arr, 'valueOf', {value: this._avg})
-    defineProperty(arr, 'toString', {value: toString})
-    defineProperty(arr, 'toJSON', {value: this._avg})
+    this._addProp(arr, '_avg', skipNull)
     return arr
-  }
+  },
+  $min: function(skipNull) {
+    var arr = []
+    this._addProp(arr, '_min', skipNull)
+    return arr
+  },
 
 }
 
