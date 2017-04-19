@@ -118,8 +118,11 @@ var stage2 = {
   },
   // _id: null,
   min: {$min: '$bb.cc.qty'},
+  max: {$max: '$bb.cc.qty'},
   avg: {$avg: '$bb.cc.qty'},
   sum: {$sum: '$bb.cc.qty'},
+  first: {$first: '$bb.cc.qty'},
+  last: {$last: '$bb.cc.qty'},
   // count: {$sum: 1},
   count2: {$sum: 1, $ensure: ['$bb.cc.qty']},
   aa: {$push: '$bb.bb'},
@@ -188,6 +191,18 @@ function groupData(data, stage){
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             $addToSet(entry[i], arr[0])
+          }
+          break
+          case '$first':
+          if(!(i in entry) && type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i] = arr[0]
+          }
+          break
+          case '$last':
+          if(type==='string') {
+            const arr = getDataInPath(data, currentPath, keyPath)
+            entry[i] = arr[0]
           }
           break
         }
