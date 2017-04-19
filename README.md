@@ -1,7 +1,7 @@
 # group-data
-Group data like mongodb `[$group][]` aggregate
+Group data like mongodb [$group][group] aggregate
 
-[$group]: https://docs.mongodb.com/manual/reference/operator/aggregation/group/#pipe._S_group
+[group]: https://docs.mongodb.com/manual/reference/operator/aggregation/group/#pipe._S_group
 
 ## Install
 
