@@ -100,7 +100,9 @@ var data2 = {
       "item": "aa",
       "color": "2",
       "qty": 23
-    }],
+    },
+    {c: {d: 1}}
+    ],
     c:{b:{d:2}}
   }]
 }
@@ -122,11 +124,10 @@ var stage00 = {
 var stage2 = {
   $unwind: '$bb.cc.$',
   _id: {
-    ITEM: '$bb.bb',
-    // COL: '$bb.cc.color',
+    ITEM: '$bb.cc.item',
+    COL: '$bb.cc.color',
   },
   asdf: {$sum: '$bb.cc.qty'},
-  count: {$sum: 1},
 }
 
 
@@ -140,7 +141,7 @@ function v2(data, stage){
     const $unwind = stage.$unwind
     // for sum:1, using _parentPath,
     // for sum: 'qty', using _path (current path)
-    if(_parentPath != $unwind && _path!=$unwind) return
+    if(_parentPath != $unwind) return
 
     for(let i in stage) {
       if(i==='_id') continue
@@ -155,8 +156,7 @@ function v2(data, stage){
           if(!(i in entry)) entry[i] = 0
           if(typeof keyPath=='string' && keyPath === _path) {
             entry[i] += v.val
-          } else if (typeof keyPath=='number' && _path===$unwind){
-            entry[i] += keyPath
+            entry['$count'] = (entry['$count']|0)+1
           }
           break
         }
@@ -169,14 +169,16 @@ function v2(data, stage){
 v2(data2, stage2)
 
 function getDataInPath(data, currentPath, targetPath) {
+  // console.log(currentPath, targetPath)
   let path = targetPath.slice(1).split('.')
   let curPath = currentPath.slice()
   let cur
   while(cur=path.shift()) {
     curPath.shift()
-    if(!(cur in data)) return [null, 1]
+    // if(curPath.shift() != cur) return [null, 1]
+    if(typeof data !== 'object' || !(cur in data)) return [null, 1]
     data = data[cur]
-    if(Array.isArray(data)) {
+    while(Array.isArray(data)) {
       data = data[curPath.shift()]
     }
   }
@@ -188,12 +190,20 @@ function getEntry (data, stage, currentPath){
   const keyNames = Object.keys(_id)
   
   // new entry
-  const newEntry = {_id:{}}
-  keyNames.forEach(key=>{
-    const arr = getDataInPath(data, currentPath, _id[key])
-    if(arr[1]) return
-    newEntry._id[key] = arr[0]
-  })
+  let newEntry = {_id:{}}
+  if(
+    ! keyNames.every(key=>{
+      const arr = getDataInPath(data, currentPath, _id[key])
+      if(arr[1]) {
+        return false
+      }
+      newEntry._id[key] = arr[0]
+      return true
+    })
+  ){
+    return
+  }
+
 
   var entry = result.find(entry=>{
     return keyNames.every(
