@@ -127,6 +127,7 @@ var stage2 = {
     ITEM: '$bb.cc.item',
     COL: '$bb.cc.color',
   },
+  // _id: null,
   asdf: {$sum: '$bb.cc.qty'},
   count: {$sum: 1}
 }
@@ -188,7 +189,8 @@ function getDataInPath(data, currentPath, targetPath) {
 }
 
 function getEntry (data, stage, currentPath){
-  const _id = stage._id
+  let _id = stage._id
+  if(_id==null || typeof _id!='object') _id = {}
   const keyNames = Object.keys(_id)
   
   // new entry
