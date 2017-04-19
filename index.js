@@ -178,33 +178,33 @@ function groupData(data, stage){
           } else {
             entry[i].push(keyPath)
           }
-          break
+          return
           case '$push':
           if(!(i in entry)) entry[i] = []
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             entry[i].push(arr[0])
           }
-          break
+          return
           case '$addToSet':
           if(!(i in entry)) entry[i] = []
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             $addToSet(entry[i], arr[0])
           }
-          break
+          return
           case '$first':
           if(!(i in entry) && type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             entry[i] = arr[0]
           }
-          break
+          return
           case '$last':
           if(type==='string') {
             const arr = getDataInPath(data, currentPath, keyPath)
             entry[i] = arr[0]
           }
-          break
+          return
         }
       })
     }
