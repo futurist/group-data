@@ -161,8 +161,7 @@ function groupData(data, stage){
 
     const entries = getEntry(data, stage, currentPath)
     if(!entries) return
-    entries.forEach(entry=>{
-      if(!entry) return
+
       for(let i in stage) {
         if(i==='_id') continue
         const accumObj = stage[i]
@@ -180,50 +179,52 @@ function groupData(data, stage){
             }
           }
           const type = typeof keyPath
-          // no match accum, skip
-          switch( accum ) {
-            case '$sum':
-            case '$avg':
-            case '$max':
-            case '$min':
-            if(!(i in entry)) entry[i] = makeArrayObject(accum, {skipNull: true})
-            if(type==='string') {
-              const arr = getDataInPath(data, currentPath, keyPath)
-              entry[i].push(arr[0])
-            } else {
-              entry[i].push(keyPath)
+          entries.forEach(entry=>{
+          if(!entry) return
+            // no match accum, skip
+            switch( accum ) {
+              case '$sum':
+              case '$avg':
+              case '$max':
+              case '$min':
+              if(!(i in entry)) entry[i] = makeArrayObject(accum, {skipNull: true})
+              if(type==='string') {
+                const arr = getDataInPath(data, currentPath, keyPath)
+                entry[i].push(arr[0])
+              } else {
+                entry[i].push(keyPath)
+              }
+              return
+              case '$push':
+              if(!(i in entry)) entry[i] = []
+              if(type==='string') {
+                const arr = getDataInPath(data, currentPath, keyPath)
+                entry[i].push(arr[0])
+              }
+              return
+              case '$addToSet':
+              if(!(i in entry)) entry[i] = []
+              if(type==='string') {
+                const arr = getDataInPath(data, currentPath, keyPath)
+                $addToSet(entry[i], arr[0])
+              }
+              return
+              case '$first':
+              if(!(i in entry) && type==='string') {
+                const arr = getDataInPath(data, currentPath, keyPath)
+                entry[i] = arr[0]
+              }
+              return
+              case '$last':
+              if(type==='string') {
+                const arr = getDataInPath(data, currentPath, keyPath)
+                entry[i] = arr[0]
+              }
+              return
             }
-            return
-            case '$push':
-            if(!(i in entry)) entry[i] = []
-            if(type==='string') {
-              const arr = getDataInPath(data, currentPath, keyPath)
-              entry[i].push(arr[0])
-            }
-            return
-            case '$addToSet':
-            if(!(i in entry)) entry[i] = []
-            if(type==='string') {
-              const arr = getDataInPath(data, currentPath, keyPath)
-              $addToSet(entry[i], arr[0])
-            }
-            return
-            case '$first':
-            if(!(i in entry) && type==='string') {
-              const arr = getDataInPath(data, currentPath, keyPath)
-              entry[i] = arr[0]
-            }
-            return
-            case '$last':
-            if(type==='string') {
-              const arr = getDataInPath(data, currentPath, keyPath)
-              entry[i] = arr[0]
-            }
-            return
-          }
+          })
         })
       }
-    })
   })
 }
 
