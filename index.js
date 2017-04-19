@@ -135,80 +135,93 @@ var stage2 = {
 //   _id:{c:'$c'}
 // }
 
-var result = []
+var resultObj = {}
+
+// create each level of path in resultObj
+function createResultObj(data, path) {
+  for(let i=0; i<path.length; i++) {
+    if(Array.isArray(data[path[i]])) {
+      let _path = path.slice(0,i+1).join('.')
+      resultObj[_path] = resultObj[_path] || []
+    }
+  }
+}
 
 function groupData(data, stage){
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
-    // return console.log('-----', v.val, v.path, _path, currentPath)
 
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
-    const entry = getEntry(data, stage, currentPath)
-    if(!entry) return
+    console.log('-----', toStagePath(data, v.path), v.path, _path, currentPath)
 
-    for(let i in stage) {
-      if(i==='_id') continue
-      const accumObj = stage[i]
-      if(!accumObj || typeof accumObj!='object') continue
-      Object.keys(accumObj).forEach(accum=>{
-        const keyPath = accumObj[accum]
-        const $ensure = accumObj.$ensure
+    createResultObj(data, v.path)
 
-        // $ensure check for exists
-        if(Array.isArray($ensure)){
-          if($ensure.some(v=>{
-            return getDataInPath(data, currentPath, v)[1]
-          })){
+    const entries = getEntry(data, stage, currentPath)
+    if(!entries) return
+    entries.forEach(entry=>{
+      for(let i in stage) {
+        if(i==='_id') continue
+        const accumObj = stage[i]
+        if(!accumObj || typeof accumObj!='object') continue
+        Object.keys(accumObj).forEach(accum=>{
+          const keyPath = accumObj[accum]
+          const $ensure = accumObj.$ensure
+
+          // $ensure check for exists
+          if(Array.isArray($ensure)){
+            if($ensure.some(v=>{
+              return getDataInPath(data, currentPath, v)[1]
+            })){
+              return
+            }
+          }
+          const type = typeof keyPath
+          // no match accum, skip
+          switch( accum ) {
+            case '$sum':
+            case '$avg':
+            case '$max':
+            case '$min':
+            if(!(i in entry)) entry[i] = makeArrayObject(accum, {skipNull: true})
+            if(type==='string') {
+              const arr = getDataInPath(data, currentPath, keyPath)
+              entry[i].push(arr[0])
+            } else {
+              entry[i].push(keyPath)
+            }
+            return
+            case '$push':
+            if(!(i in entry)) entry[i] = []
+            if(type==='string') {
+              const arr = getDataInPath(data, currentPath, keyPath)
+              entry[i].push(arr[0])
+            }
+            return
+            case '$addToSet':
+            if(!(i in entry)) entry[i] = []
+            if(type==='string') {
+              const arr = getDataInPath(data, currentPath, keyPath)
+              $addToSet(entry[i], arr[0])
+            }
+            return
+            case '$first':
+            if(!(i in entry) && type==='string') {
+              const arr = getDataInPath(data, currentPath, keyPath)
+              entry[i] = arr[0]
+            }
+            return
+            case '$last':
+            if(type==='string') {
+              const arr = getDataInPath(data, currentPath, keyPath)
+              entry[i] = arr[0]
+            }
             return
           }
-        }
-        const type = typeof keyPath
-        // no match accum, skip
-        switch( accum ) {
-          case '$sum':
-          case '$avg':
-          case '$max':
-          case '$min':
-          if(!(i in entry)) entry[i] = makeArrayObject(accum, {skipNull: true})
-          if(type==='string') {
-            const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i].push(arr[0])
-          } else {
-            entry[i].push(keyPath)
-          }
-          return
-          case '$push':
-          if(!(i in entry)) entry[i] = []
-          if(type==='string') {
-            const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i].push(arr[0])
-          }
-          return
-          case '$addToSet':
-          if(!(i in entry)) entry[i] = []
-          if(type==='string') {
-            const arr = getDataInPath(data, currentPath, keyPath)
-            $addToSet(entry[i], arr[0])
-          }
-          return
-          case '$first':
-          if(!(i in entry) && type==='string') {
-            const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i] = arr[0]
-          }
-          return
-          case '$last':
-          if(type==='string') {
-            const arr = getDataInPath(data, currentPath, keyPath)
-            entry[i] = arr[0]
-          }
-          return
-        }
-      })
-    }
-
+        })
+      }
+    })
   })
 }
 
@@ -297,21 +310,24 @@ function getEntry (data, stage, currentPath){
       newEntry._id[key] = arr[0]
       return true
     })
-  ){
+  ) {
     return
   }
 
-
-  var entry = result.find(entry=>{
-    return keyNames.every(
-      key=>entry._id[key] === newEntry._id[key]
-    )
+  Object.keys(resultObj).map(g=>{
+    if( currentPath.join('.').indexOf(g) !== 0 ) return
+    const result = resultObj[g]
+    var entry = result.find(entry=>{
+      return keyNames.every(
+        key=>entry._id[key] === newEntry._id[key]
+      )
+    })
+    if(entry==null) {
+      entry = newEntry
+      result.push(entry)
+    }
+    return entry
   })
-  if(entry==null){
-    entry = newEntry
-    result.push(entry)
-  }
-  return entry
 }
 
 function toStagePath(data, path, name){
@@ -335,8 +351,10 @@ function toStagePath(data, path, name){
   //   var parentPath = '$'+p.join('.')
   // }
 
-  if(Array.isArray(data)) p.push('$')
-  else p.push(name)
+  if(name != null) {
+    if(Array.isArray(data)) p.push('$')
+    else p.push(name)
+  }
 
   // return [parentPath, '$'+p.join('.')]
   return '$'+p.join('.')
@@ -351,7 +369,9 @@ function isParentArray (subArr, parentArr) {
 }
 
 groupData(data2, stage2)
-console.log( result)
+
+var util=require('util')
+console.log( util.inspect(resultObj, {depth:null}) )
 
 module.exports = groupData
 
