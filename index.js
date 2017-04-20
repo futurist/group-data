@@ -1,10 +1,109 @@
 
 var _ = require('objutil')
 
-var resultObj = {}
+/** Helper functions */
+function arrayObjectProp (method, options) {
+  return {
+    _options: {value: options},
+    valueOf: {value: function() {
+      return this[method]()
+    }},
+    toString: {value: function() {
+      return String(this.valueOf())
+    }},
+    toJSON: {value: function() {
+      return this.valueOf()
+    }},
+    _sum: {value: function() {
+      return this.reduce((prev, cur)=>{
+        return typeof cur=='number' && !isNaN(cur)
+          ? prev + cur
+          : prev
+      }, 0)
+    }},
+    _avg: {value: function() {
+      return this._sum() / this._count()
+    }},
+    _min: {value: function() {
+      return Math.min.apply(null, this._getArray())
+    }},
+    _max: {value: function() {
+      return Math.max.apply(null, this._getArray())
+    }},
+    _count: {value: function() {
+      return this._getArray().length
+    }},
+    _getArray: {value: function() {
+      return !this._options.skipNull
+        ? this
+        : this.filter(v=>v!=null)
+    }},
+  }
+}
+
+function makeArrayObject (method, options) {
+  var arr = []
+  var _method = method.replace(/^\$/, '_')
+  Object.defineProperties(arr, arrayObjectProp(_method, options||{}))
+  return arr
+}
+
+function $addToSet(arr, item) {
+  if(arr.indexOf(item)<0) arr.push(item)
+}
+
+
+function toStagePath(data, path, name){
+  // return is array: [parentPath, currentPath]
+  var p = []
+  var parent
+  for(var i=0; i< path.length; i++) {
+    p.push(Array.isArray(data)
+      ? '$'
+      : path[i]
+    )
+    parent = data
+    data = data[path[i]]
+  }
+
+  // if(Array.isArray(parent)) {
+  //   // console.log(p.concat('$').join())
+  //   var parentPath = '$'+p.concat('$').join('.')
+  // } else {
+  //   var parentPath = '$'+p.join('.')
+  // }
+
+  if(name != null) {
+    if(Array.isArray(data)) p.push('$')
+    else p.push(name)
+  }
+
+  // return [parentPath, '$'+p.join('.')]
+  return '$'+p.join('.')
+}
+
+function getDataInPath(data, currentPath, targetPath) {
+  // console.log(currentPath, targetPath)
+  let path = targetPath.slice(1).split('.')
+  let curPath = currentPath.slice()
+  let cur
+  let provide
+  while(cur=path.shift()) {
+    provide = curPath.shift()
+    if(cur=='$') cur = provide
+    if(typeof data !== 'object' || !(cur in data)) {
+      return [null, 1]
+    }
+    data = data[cur]
+  }
+  return [data]
+}
+
+
+/** Main funciton */
 
 // create each level of path in resultObj
-function createResultObj(data, path) {
+function createResultObj(resultObj, data, path) {
   for(let i=0; i<path.length; i++) {
     if(Array.isArray(data)) {
       let _path = path.slice(0,i).join('.')
@@ -15,8 +114,48 @@ function createResultObj(data, path) {
   }
 }
 
+// get each level entry from path arr
+function getEntry (resultObj, data, stage, currentPath){
+  let _id = stage._id
+  if(_id==null || typeof _id!='object') _id = {}
+  const keyNames = Object.keys(_id)
+  
+  // new entry
+  let newEntry = {_id:{}}
+  if(
+    ! keyNames.every(key=>{
+      const arr = getDataInPath(data, currentPath, _id[key])
+      if(arr[1]) {
+        return false
+      }
+      newEntry._id[key] = arr[0]
+      return true
+    })
+  ) {
+    return
+  }
+
+  return Object.keys(resultObj).map(g=>{
+    // console.log(currentPath, g, 9999)
+    if( currentPath.join('.').indexOf(g) !== 0 ) return
+    const result = resultObj[g]
+    var entry = result.find(entry=>{
+      return keyNames.every(
+        key=>entry._id[key] === newEntry._id[key]
+      )
+    })
+    if(entry==null) {
+      entry = _.merge({}, newEntry)
+      result.push(entry)
+    }
+    return entry
+  })
+}
+
+
+// usage: groupData(data, stage)
 function groupData(data, stage) {
-  resultObj = {}
+  var resultObj = {}
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
@@ -25,9 +164,9 @@ function groupData(data, stage) {
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
 
-    createResultObj(data, currentPath)
+    createResultObj(resultObj, data, currentPath)
 
-    const entries = getEntry(data, stage, currentPath)
+    const entries = getEntry(resultObj, data, stage, currentPath)
     if(!entries) return
 
       for(let i in stage) {
@@ -98,138 +237,7 @@ function groupData(data, stage) {
   return resultObj
 }
 
-function arrayObjectProp (method, options) {
-  return {
-    _options: {value: options},
-    valueOf: {value: function() {
-      return this[method]()
-    }},
-    toString: {value: function() {
-      return String(this.valueOf())
-    }},
-    toJSON: {value: function() {
-      return this.valueOf()
-    }},
-    _sum: {value: function() {
-      return this.reduce((prev, cur)=>{
-        return typeof cur=='number' && !isNaN(cur)
-          ? prev + cur
-          : prev
-      }, 0)
-    }},
-    _avg: {value: function() {
-      return this._sum() / this._count()
-    }},
-    _min: {value: function() {
-      return Math.min.apply(null, this._getArray())
-    }},
-    _max: {value: function() {
-      return Math.max.apply(null, this._getArray())
-    }},
-    _count: {value: function() {
-      return this._getArray().length
-    }},
-    _getArray: {value: function() {
-      return !this._options.skipNull
-        ? this
-        : this.filter(v=>v!=null)
-    }},
-  }
-}
 
-function makeArrayObject (method, options) {
-  var arr = []
-  var _method = method.replace(/^\$/, '_')
-  Object.defineProperties(arr, arrayObjectProp(_method, options||{}))
-  return arr
-}
-
-function $addToSet(arr, item) {
-  if(arr.indexOf(item)<0) arr.push(item)
-}
-
-function getDataInPath(data, currentPath, targetPath) {
-  // console.log(currentPath, targetPath)
-  let path = targetPath.slice(1).split('.')
-  let curPath = currentPath.slice()
-  let cur
-  let provide
-  while(cur=path.shift()) {
-    provide = curPath.shift()
-    if(cur=='$') cur = provide
-    if(typeof data !== 'object' || !(cur in data)) {
-      return [null, 1]
-    }
-    data = data[cur]
-  }
-  return [data]
-}
-
-function getEntry (data, stage, currentPath){
-  let _id = stage._id
-  if(_id==null || typeof _id!='object') _id = {}
-  const keyNames = Object.keys(_id)
-  
-  // new entry
-  let newEntry = {_id:{}}
-  if(
-    ! keyNames.every(key=>{
-      const arr = getDataInPath(data, currentPath, _id[key])
-      if(arr[1]) {
-        return false
-      }
-      newEntry._id[key] = arr[0]
-      return true
-    })
-  ) {
-    return
-  }
-
-  return Object.keys(resultObj).map(g=>{
-    // console.log(currentPath, g, 9999)
-    if( currentPath.join('.').indexOf(g) !== 0 ) return
-    const result = resultObj[g]
-    var entry = result.find(entry=>{
-      return keyNames.every(
-        key=>entry._id[key] === newEntry._id[key]
-      )
-    })
-    if(entry==null) {
-      entry = _.merge({}, newEntry)
-      result.push(entry)
-    }
-    return entry
-  })
-}
-
-function toStagePath(data, path, name){
-  // return is array: [parentPath, currentPath]
-  var p = []
-  var parent
-  for(var i=0; i< path.length; i++) {
-    p.push(Array.isArray(data)
-      ? '$'
-      : path[i]
-    )
-    parent = data
-    data = data[path[i]]
-  }
-
-  // if(Array.isArray(parent)) {
-  //   // console.log(p.concat('$').join())
-  //   var parentPath = '$'+p.concat('$').join('.')
-  // } else {
-  //   var parentPath = '$'+p.join('.')
-  // }
-
-  if(name != null) {
-    if(Array.isArray(data)) p.push('$')
-    else p.push(name)
-  }
-
-  // return [parentPath, '$'+p.join('.')]
-  return '$'+p.join('.')
-}
 
 // var util=require('util')
 // console.log(util.inspect(groupData(data2, stage2).valueOf(), {depth:null}))
