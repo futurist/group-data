@@ -8,7 +8,7 @@ function checkMatch (checkObj, condition){
     )
 }
 
-console.log(checkMatch(null, {name:/o/, id:{$lt: 33}}) )
+// console.log(checkMatch(null, {name:/o/, id:{$lt: 33}}) )
 
 function checkConditionObject(cond, value, contextObj){
   if(_.isPrimitive(cond)) {
