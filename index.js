@@ -85,7 +85,9 @@ function toStagePath(data, path, name){
 
 function getDataInPath(data, currentPath, targetPath) {
   // console.log(currentPath, targetPath)
-  let path = targetPath.slice(1).split('.')
+  let path = Array.isArray(targetPath)
+    ? targetPath.slice()
+    : targetPath.slice(1).split('.')
   let curPath = currentPath.slice()
   let cur
   let provide
@@ -153,14 +155,22 @@ function getEntry (resultObj, data, stage, currentPath){
   })
 }
 
-function checkExclude(stage, value) {
+function checkExclude(data, stage, currentPath) {
   if(!('$exclude' in stage)) return false
-  return checkMatch(value, stage.$exclude)
+  return [].concat(stage.$exclude).some(
+    v=>v && checkMatch(
+      getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
+    )
+  )
 }
 
-function checkInclude(stage, value) {
+function checkInclude(data, stage, currentPath) {
   if(!('$include' in stage)) return true
-  return checkMatch(value, stage.$include)
+  return [].concat(stage.$include).some(
+    v=>v && checkMatch(
+      getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
+    )
+  )
 }
 
 // usage: groupData(data, stage)
@@ -173,8 +183,8 @@ function groupData(data, stage) {
     // console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
-    if(!checkInclude(stage, v.val)) return
-    if(checkExclude(stage, v.val)) return
+    if(!checkInclude(data, stage, currentPath)) return
+    if(checkExclude(data, stage, currentPath)) return
 
     createResultObj(resultObj, data, currentPath)
 

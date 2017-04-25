@@ -565,7 +565,7 @@ test('$exclude', t=>{
     {name: 1, qty: 30},
   ]
   var stage = {
-    $exclude: {name: 2},
+    $exclude: {$test: {name: 2}},
     $unwind: '$$',
     _id: {
       name: '$$.name'
@@ -590,7 +590,7 @@ test('$include', t=>{
     {name: 1, qty: 30},
   ]
   var stage = {
-    $include: {name: 2},
+    $include: {$test: {name: 2}},
     $unwind: '$$',
     _id: {
       name: '$$.name'
@@ -615,8 +615,11 @@ test('$include and $exclude', t=>{
     {name: 1, qty: 30},
   ]
   var stage = {
-    $exclude: {name: 2},
-    $include: {qty: 10},
+    $exclude: {
+      $path: '$$',
+      $test: {name: 2}
+    },
+    $include: {$test: {qty: 10}},
     $unwind: '$$',
     _id: {
       name: '$$.name'
