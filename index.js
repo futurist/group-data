@@ -195,11 +195,13 @@ function checkFactory(data, stage, currentPath) {
             let match = false
             let cond = v.$values
             interateDataInPath(data, currentPath, x=>{
-              match = checkCondition(x.val, cond, x.col)
-              if(match){
-                console.log(x.path, x.val)
-                callback && callback(x.col)
-                return false
+              for(let i in x.col){
+                match = checkCondition(x.col[i], cond, x.col)
+                if(match){
+                  // console.log(x.path, i)
+                  callback && callback(x.col, i, x.path)
+                  return false
+                }
               }
             })
             return match

@@ -658,15 +658,23 @@ test('$values', t=>{
     _id:null,
     count: {$sum: 1}
   }
+  const matchKey=['c', 'id']
+  const matchCol = [
+    { c: 2 },
+    { id: 2, name: 'a', b: { c: 3 } }
+  ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: v=>console.log(v, 999)
+      onExclude: (col, key, path)=>{
+        t.deepEqual(key, matchKey.shift())
+        t.deepEqual(col, matchCol.shift())
+      }
     }))),
     {
       a: [
         {
         _id:{},
-        count: 2
+        count: 1
       }]}
   )
 })
