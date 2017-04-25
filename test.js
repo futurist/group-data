@@ -573,7 +573,9 @@ test('$exclude', t=>{
     sum: {$sum: '$$.qty'}
   }
   t.deepEqual(
-    JSON.parse(JSON.stringify(lib(data, stage))),
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onExclude: v=>t.deepEqual(v, { name: 2, qty: 20 })
+    }))),
     {
       '':[
         {_id: {name: 1}, sum: 40}
@@ -599,7 +601,9 @@ test('$include', t=>{
     sum: {$sum: '$$.qty'}
   }
   t.deepEqual(
-    JSON.parse(JSON.stringify(lib(data, stage))),
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onInclude: v=>t.deepEqual(v, { name: 2, qty: 20 })
+    }))),
     {
       '':[
         {_id: {name: 2}, sum: 20}

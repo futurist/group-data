@@ -155,26 +155,27 @@ function getEntry (resultObj, data, stage, currentPath){
   })
 }
 
-function checkExclude(data, stage, currentPath) {
-  if(!('$exclude' in stage)) return false
-  return [].concat(stage.$exclude).some(
-    v=>v && _.is(v.$test, 'Object') && checkMatch(
-      getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
+function checkFactory(data, stage, currentPath) {
+  return function (key, defaultVal, callback) {
+    if(!(key in stage)) return defaultVal
+    return [].concat(stage[key]).some(
+      v=>{
+        if(_.isIterable(v)) {
+          const theVal = getDataInPath(data, currentPath, v.$path||currentPath)[0]
+          const result = checkMatch(theVal, v.$test)
+          if(result && typeof callback=='function') {
+            callback(theVal)
+          }
+          return result
+        }
+      }
     )
-  )
-}
-
-function checkInclude(data, stage, currentPath) {
-  if(!('$include' in stage)) return true
-  return [].concat(stage.$include).some(
-    v=>v && _.is(v.$test, 'Object') && checkMatch(
-      getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
-    )
-  )
+  }
 }
 
 // usage: groupData(data, stage)
-function groupData(data, stage) {
+function groupData(data, stage, options) {
+  options = options || {}
   var resultObj = {}
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
@@ -183,8 +184,11 @@ function groupData(data, stage) {
     // console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
-    if(!checkInclude(data, stage, currentPath)) return
-    if(checkExclude(data, stage, currentPath)) return
+
+    // check for include, exclude
+    const checkFunc = checkFactory(data, stage, currentPath)
+    if(!checkFunc('$include', true, options.onInclude)) return
+    if(checkFunc('$exclude', false, options.onExclude)) return
 
     createResultObj(resultObj, data, currentPath)
 

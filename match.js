@@ -1,12 +1,14 @@
 var _ = require('objutil')
 
 function checkMatch (checkObj, condition){
-  return Object.keys(condition).every(
-    v=>checkConditionObject(condition[v], checkObj[v], checkObj)
-  )
+  return _.isIterable(checkObj)
+    && _.isIterable(condition)
+    && Object.keys(condition).every(
+      v=>checkConditionObject(condition[v], checkObj[v], checkObj)
+    )
 }
 
-// console.log(checkMatch({name:'bob', id:23}, {name:/o/, id:{$lt: 33}}) )
+console.log(checkMatch(null, {name:/o/, id:{$lt: 33}}) )
 
 function checkConditionObject(cond, value, contextObj){
   if(_.isPrimitive(cond)) {
