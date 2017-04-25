@@ -4,22 +4,22 @@ function checkMatch (checkObj, condition){
   return _.isIterable(checkObj)
     && _.isIterable(condition)
     && Object.keys(condition).every(
-      v=>checkConditionObject(condition[v], checkObj[v], checkObj)
+      v=>checkCondition(checkObj[v], condition[v], checkObj)
     )
 }
 
 // console.log(checkMatch(null, {name:/o/, id:{$lt: 33}}) )
 
-function checkConditionObject(cond, value, contextObj){
+function checkCondition(value, cond, contextObj){
   if(_.isPrimitive(cond)) {
     return value === cond
   } else if (_.is(cond, 'RegExp')) {
     return cond.test(value)
   } else if (_.is(cond, 'Object')) {
     return Object.keys(cond).every(key=>
-      checkConditionItem(key, cond[key], value, contextObj))
+      checkConditionItem(value, key, cond[key], contextObj))
   } else if (Array.isArray(cond)) {
-    return cond.some(v=>checkConditionObject(v, value))
+    return cond.some(v=>checkCondition(value, v, contextObj))
   }
 }
 
@@ -27,7 +27,7 @@ function checkConditionObject(cond, value, contextObj){
 // {$gt: 3}, left==$gt, right=3
 // contextObj is the object provide the dot-path of relation of checkVal
 // e.g. $gt: '$age', $age will be looked up in contextObj
-function checkConditionItem(left, right, checkVal, contextObj) {
+function checkConditionItem(checkVal, left, right, contextObj) {
   const isArray = Array.isArray
   const isPrimitive = _.isPrimitive(checkVal)
   switch(left){
@@ -51,15 +51,15 @@ function checkConditionItem(left, right, checkVal, contextObj) {
       && right.every(v=>checkVal.indexOf(v)>-1)
 
     case '$elemMatch': return isArray(checkVal)
-      && checkVal.some(v=>checkConditionObject(right, v, contextObj))
+      && checkVal.some(v=>checkCondition(v, right, contextObj))
 
-    case '$not': return !checkConditionObject(right, checkVal, contextObj)
+    case '$not': return !checkCondition(checkVal, right, contextObj)
 
     case '$or': return isArray(right)
-      && checkConditionObject(right, checkVal, contextObj)
+      && checkCondition(checkVal, right, contextObj)
 
     case '$and': return isArray(right)
-      && right.every(v=>checkConditionObject(v, checkVal, contextObj))
+      && right.every(v=>checkCondition(checkVal, v, contextObj))
 
   }
 }
@@ -68,44 +68,18 @@ function checkConditionItem(left, right, checkVal, contextObj) {
 //   $exclude: 23
 // }, '23'))
 
-// console.log(checkConditionItem('$elemMatch', 3,  [13, 2]))
+// console.log(checkConditionItem([13, 2], '$elemMatch', 3))
 
-// console.log(checkConditionObject(
+// console.log(checkCondition(
+//   3
 //   [
 //     {$not: {$gt: 1, $lt:2}},
 //   ],
-//   3
 // ))
 
 
-module.exports = checkMatch
-
-// function interateDataInPath(data, currentPath, callback) {
-//   let path = currentPath.slice()
-//   for(let cur, i=0; i<path.length; i++) {
-//     cur = path[i]
-//     if(typeof data !== 'object' || !(cur in data)) {
-//       callback({
-//         nil: true,
-//         key: cur,
-//         path: path.slice(0,i),
-//         col: data
-//       })
-//       return
-//     } else {
-//       callback({
-//         key: cur,
-//         val: data[cur],
-//         path: path.slice(0,i),
-//         col: data
-//       })
-//     }
-//     data = data[cur]
-//   }
-// }
-
-// interateDataInPath({
-//   a: [{b: {c: {d: 2}}}]
-// }, 'a.0.b.c.d'.split('.'), v=>{
-//   console.log(v)
-// })
+module.exports = {
+  checkMatch,
+  checkCondition,
+  checkConditionItem
+}

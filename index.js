@@ -1,6 +1,6 @@
 
 var _ = require('objutil')
-var checkMatch = require('./match.js')
+var {checkMatch, checkCondition} = require('./match.js')
 
 /** Helper functions */
 function arrayObjectProp (method, options) {
@@ -102,12 +102,12 @@ function interateDataInPath(data, currentPath, callback) {
       })
       return
     } else {
-      callback({
+      if(callback({
         key: cur,
         val: data[cur],
         path: path.slice(0,i),
         col: data
-      })
+      })===false) return
     }
     data = data[cur]
   }
@@ -191,12 +191,26 @@ function checkFactory(data, stage, currentPath) {
     return [].concat(stage[key]).some(
       v=>{
         if(_.isIterable(v)) {
-          const theVal = getDataInPath(data, currentPath, v.$path||currentPath)[0]
-          const result = checkMatch(theVal, v.$test)
-          if(result && typeof callback=='function') {
-            callback(theVal)
+          if(v.$values) {
+            let match = false
+            let cond = v.$values
+            interateDataInPath(data, currentPath, x=>{
+              match = checkCondition(x.val, cond, x.col)
+              if(match){
+                console.log(x.path, x.val)
+                callback && callback(x.col)
+                return false
+              }
+            })
+            return match
+          } else {
+            const theVal = getDataInPath(data, currentPath, v.$path||currentPath)[0]
+            const result = checkMatch(theVal, v.$test)
+            if(result && typeof callback=='function') {
+              callback(theVal)
+            }
+            return result
           }
-          return result
         }
       }
     )

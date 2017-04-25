@@ -640,3 +640,33 @@ test('$include and $exclude', t=>{
     }
   )
 })
+
+
+test('$values', t=>{
+  var data = {
+    a:[
+      {id: 1, name:'a', b:{c:2}},
+      {id: 2, name:'a', b:{c:3}},
+      {id: 3, name:'a', b:{c:15}},
+    ]
+  }
+  var stage={
+    $unwind: '$a.$.b.c',
+    $exclude: {
+      $values: 2
+    },
+    _id:null,
+    count: {$sum: 1}
+  }
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onExclude: v=>console.log(v, 999)
+    }))),
+    {
+      a: [
+        {
+        _id:{},
+        count: 2
+      }]}
+  )
+})
