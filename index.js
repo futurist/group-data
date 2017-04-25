@@ -312,7 +312,8 @@ function groupData(data, stage, options) {
   return resultObj
 }
 
-
+groupData.checkMatch = checkMatch
+groupData.checkCondition = checkCondition
 
 // var util=require('util')
 // console.log(util.inspect(groupData(data2, stage2).valueOf(), {depth:null}))
