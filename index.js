@@ -1,5 +1,6 @@
 
 var _ = require('objutil')
+var checkMatch = require('./match.js')
 
 /** Helper functions */
 function arrayObjectProp (method, options) {
@@ -152,6 +153,10 @@ function getEntry (resultObj, data, stage, currentPath){
   })
 }
 
+function checkExclude(stage, value) {
+  if(!('$exclude' in stage)) return false
+  return checkMatch(value, stage.$exclude)
+}
 
 // usage: groupData(data, stage)
 function groupData(data, stage) {
