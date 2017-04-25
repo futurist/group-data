@@ -80,3 +80,32 @@ function checkConditionItem(left, right, checkVal, contextObj) {
 
 module.exports = checkMatch
 
+// function interateDataInPath(data, currentPath, callback) {
+//   let path = currentPath.slice()
+//   for(let cur, i=0; i<path.length; i++) {
+//     cur = path[i]
+//     if(typeof data !== 'object' || !(cur in data)) {
+//       callback({
+//         nil: true,
+//         key: cur,
+//         path: path.slice(0,i),
+//         col: data
+//       })
+//       return
+//     } else {
+//       callback({
+//         key: cur,
+//         val: data[cur],
+//         path: path.slice(0,i),
+//         col: data
+//       })
+//     }
+//     data = data[cur]
+//   }
+// }
+
+// interateDataInPath({
+//   a: [{b: {c: {d: 2}}}]
+// }, 'a.0.b.c.d'.split('.'), v=>{
+//   console.log(v)
+// })
