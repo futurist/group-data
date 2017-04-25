@@ -581,3 +581,54 @@ test('$exclude', t=>{
     }
   )
 })
+
+
+test('$include', t=>{
+  var data = [
+    {name: 1, qty: 10},
+    {name: 2, qty: 20},
+    {name: 1, qty: 30},
+  ]
+  var stage = {
+    $include: {name: 2},
+    $unwind: '$$',
+    _id: {
+      name: '$$.name'
+    },
+    sum: {$sum: '$$.qty'}
+  }
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage))),
+    {
+      '':[
+        {_id: {name: 2}, sum: 20}
+      ]
+    }
+  )
+})
+
+
+test('$include and $exclude', t=>{
+  var data = [
+    {name: 1, qty: 10},
+    {name: 2, qty: 20},
+    {name: 1, qty: 30},
+  ]
+  var stage = {
+    $exclude: {name: 2},
+    $include: {qty: 10},
+    $unwind: '$$',
+    _id: {
+      name: '$$.name'
+    },
+    sum: {$sum: '$$.qty'}
+  }
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage))),
+    {
+      '':[
+        {_id: {name: 1}, sum: 10}
+      ]
+    }
+  )
+})

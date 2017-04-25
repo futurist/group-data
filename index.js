@@ -158,6 +158,11 @@ function checkExclude(stage, value) {
   return checkMatch(value, stage.$exclude)
 }
 
+function checkInclude(stage, value) {
+  if(!('$include' in stage)) return true
+  return checkMatch(value, stage.$include)
+}
+
 // usage: groupData(data, stage)
 function groupData(data, stage) {
   var resultObj = {}
@@ -168,6 +173,7 @@ function groupData(data, stage) {
     // console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
+    if(!checkInclude(stage, v.val)) return
     if(checkExclude(stage, v.val)) return
 
     createResultObj(resultObj, data, currentPath)
