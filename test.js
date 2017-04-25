@@ -590,6 +590,7 @@ test('$include', t=>{
     {name: 1, qty: 30},
   ]
   var stage = {
+    $exclude: {$test: 'non-object should be ignored'},
     $include: {$test: {name: 2}},
     $unwind: '$$',
     _id: {

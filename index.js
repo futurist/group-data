@@ -158,7 +158,7 @@ function getEntry (resultObj, data, stage, currentPath){
 function checkExclude(data, stage, currentPath) {
   if(!('$exclude' in stage)) return false
   return [].concat(stage.$exclude).some(
-    v=>v && checkMatch(
+    v=>v && _.is(v.$test, 'Object') && checkMatch(
       getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
     )
   )
@@ -167,7 +167,7 @@ function checkExclude(data, stage, currentPath) {
 function checkInclude(data, stage, currentPath) {
   if(!('$include' in stage)) return true
   return [].concat(stage.$include).some(
-    v=>v && checkMatch(
+    v=>v && _.is(v.$test, 'Object') && checkMatch(
       getDataInPath(data, currentPath, v.$path||currentPath)[0], v.$test
     )
   )
