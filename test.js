@@ -717,3 +717,50 @@ test('$values with $keys', t=>{
       }]}
   )
 })
+
+
+test('array of $exclude', t=>{
+  var data = {
+    a:[
+      {id: 1, name:'a', b:{c:2}},
+      {id: 2, name:'a', b:{c:3}},
+      {id: 3, name:'a', b:{c:15}},
+    ]
+  }
+  var stage={
+    $unwind: '$a.$.b.c',
+    $exclude: [
+      {
+        $keys: 'id',
+        $values: 2
+      },
+      {
+        $path: '$a.$.b',
+        $test: {c: 15}
+      }
+    ],
+    _id:null,
+    count: {$sum: 1}
+  }
+  const matchKey=['id', undefined]
+  const matchCol = [
+    { id: 2, name: 'a', b: { c: 3 } },
+    { c: 15 },
+  ]
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onExclude: (col, key, path)=>{
+        t.deepEqual(key, matchKey.shift())
+        t.deepEqual(col, matchCol.shift())
+      }
+    }))),
+    {
+      a: [
+        {
+        _id:{},
+        count: 1
+      }]}
+  )
+})
+
+
