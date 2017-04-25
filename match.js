@@ -17,7 +17,7 @@ function checkCondition(value, cond, contextObj){
     return cond.test(value)
   } else if (_.is(cond, 'Object')) {
     return Object.keys(cond).every(key=>
-      checkConditionItem(value, key, cond[key], contextObj))
+      checkOne(value, key, cond[key], contextObj))
   } else if (Array.isArray(cond)) {
     return cond.some(v=>checkCondition(value, v, contextObj))
   }
@@ -27,7 +27,7 @@ function checkCondition(value, cond, contextObj){
 // {$gt: 3}, left==$gt, right=3
 // contextObj is the object provide the dot-path of relation of checkVal
 // e.g. $gt: '$age', $age will be looked up in contextObj
-function checkConditionItem(checkVal, left, right, contextObj) {
+function checkOne(checkVal, left, right, contextObj) {
   const isArray = Array.isArray
   const isPrimitive = _.isPrimitive(checkVal)
   switch(left){
@@ -68,7 +68,7 @@ function checkConditionItem(checkVal, left, right, contextObj) {
 //   $exclude: 23
 // }, '23'))
 
-// console.log(checkConditionItem([13, 2], '$elemMatch', 3))
+// console.log(checkOne([13, 2], '$elemMatch', 3))
 
 // console.log(checkCondition(
 //   3
@@ -81,5 +81,5 @@ function checkConditionItem(checkVal, left, right, contextObj) {
 module.exports = {
   checkMatch,
   checkCondition,
-  checkConditionItem
+  checkOne
 }
