@@ -642,7 +642,7 @@ test('$include and $exclude', t=>{
 })
 
 
-test('$values', t=>{
+test('$values without $keys', t=>{
   var data = {
     a:[
       {id: 1, name:'a', b:{c:2}},
@@ -675,6 +675,45 @@ test('$values', t=>{
         {
         _id:{},
         count: 1
+      }]}
+  )
+})
+
+
+
+test('$values with $keys', t=>{
+  var data = {
+    a:[
+      {id: 1, name:'a', b:{c:2}},
+      {id: 2, name:'a', b:{c:3}},
+      {id: 3, name:'a', b:{c:15}},
+    ]
+  }
+  var stage={
+    $unwind: '$a.$.b.c',
+    $exclude: {
+      $keys: /d/, // or 'id'
+      $values: 2
+    },
+    _id:null,
+    count: {$sum: 1}
+  }
+  const matchKey=['id']
+  const matchCol = [
+    { id: 2, name: 'a', b: { c: 3 } },
+  ]
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onExclude: (col, key, path)=>{
+        t.deepEqual(key, matchKey.shift())
+        t.deepEqual(col, matchCol.shift())
+      }
+    }))),
+    {
+      a: [
+        {
+        _id:{},
+        count: 2
       }]}
   )
 })

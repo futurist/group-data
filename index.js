@@ -194,8 +194,11 @@ function checkFactory(data, stage, currentPath) {
           if(v.$values) {
             let match = false
             let cond = v.$values
+            let hintKeys = v.$keys
             interateDataInPath(data, currentPath, x=>{
+              // $.keys is the hint key for match
               for(let i in x.col){
+                if(hintKeys && !checkCondition(i, hintKeys)) continue
                 match = checkCondition(x.col[i], cond, x.col)
                 if(match){
                   // console.log(x.path, i)
