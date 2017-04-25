@@ -556,3 +556,28 @@ test('data', t => {
   )
   // console.log(JSON.stringify(lib(data, stage)))
 })
+
+
+test('$exclude', t=>{
+  var data = [
+    {name: 1, qty: 10},
+    {name: 2, qty: 20},
+    {name: 1, qty: 30},
+  ]
+  var stage = {
+    $exclude: {name: 2},
+    $unwind: '$$',
+    _id: {
+      name: '$$.name'
+    },
+    sum: {$sum: '$$.qty'}
+  }
+  t.deepEqual(
+    JSON.parse(JSON.stringify(lib(data, stage))),
+    {
+      '':[
+        {_id: {name: 1}, sum: 40}
+      ]
+    }
+  )
+})

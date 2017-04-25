@@ -27,18 +27,19 @@ function checkConditionObject(cond, value, contextObj){
 // e.g. $gt: '$age', $age will be looked up in contextObj
 function checkConditionItem(left, right, checkVal, contextObj) {
   const isArray = Array.isArray
+  const isPrimitive = _.isPrimitive(checkVal)
   switch(left){
 
-    case '$gt': return checkVal > right
-    case '$lt': return checkVal < right
-    case '$gte': return checkVal >= right
-    case '$lte': return checkVal <= right
-    case '$eq': return checkVal === right
-    case '$ne': return checkVal !== right
+    case '$gt': return isPrimitive && checkVal > right
+    case '$lt': return isPrimitive && checkVal < right
+    case '$gte': return isPrimitive && checkVal >= right
+    case '$lte': return isPrimitive && checkVal <= right
+    case '$eq': return isPrimitive && checkVal === right
+    case '$ne': return isPrimitive && checkVal !== right
 
-    case '$regex': return _.is(right, 'RegExp') && right.test(checkVal)
+    case '$regex': return isPrimitive && _.is(right, 'RegExp') && right.test(checkVal)
 
-    case '$mod': return isArray(right) && checkVal % right[0] === right[1]
+    case '$mod': return isPrimitive && isArray(right) && checkVal % right[0] === right[1]
 
     case '$in': return isArray(right) && right.indexOf(checkVal)>-1
     case '$nin': return isArray(right) && right.indexOf(checkVal)<0

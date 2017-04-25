@@ -168,6 +168,7 @@ function groupData(data, stage) {
     // console.log('-----', _path, currentPath)
     const $unwind = stage.$unwind
     if($unwind && _path != $unwind) return
+    if(checkExclude(stage, v.val)) return
 
     createResultObj(resultObj, data, currentPath)
 
