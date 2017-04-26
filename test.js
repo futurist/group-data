@@ -574,7 +574,7 @@ test('$exclude', t=>{
   }
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: v=>t.deepEqual(v, { name: 2, qty: 20 })
+      onExclude: v=>t.deepEqual(v.val, { name: 2, qty: 20 })
     }))),
     {
       '':[
@@ -602,7 +602,7 @@ test('$include', t=>{
   }
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onInclude: v=>t.deepEqual(v, { name: 2, qty: 20 })
+      onInclude: v=>t.deepEqual(v.val, { name: 2, qty: 20 })
     }))),
     {
       '':[
@@ -635,7 +635,7 @@ test('$include and $exclude', t=>{
     JSON.parse(JSON.stringify(lib(data, stage, {
       onExclude: v=>{
         // console.log(v)
-        t.deepEqual(v, { name: 2, qty: 20 })
+        t.deepEqual(v.val, { name: 2, qty: 20 })
       }
     }))),
     {
@@ -671,10 +671,10 @@ test('$values without $keys', t=>{
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, pkey, path, key)=>{
+      onExclude: (v, key)=>{
         t.deepEqual(key, matchKey.shift())
-        t.deepEqual(pkey, matchPKey.shift())
-        t.deepEqual(col, matchCol.shift())
+        t.deepEqual(v.key, matchPKey.shift())
+        t.deepEqual(v.val, matchCol.shift())
       }
     }))),
     {
@@ -712,11 +712,11 @@ test('$values with $keys', t=>{
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, pkey, path, key)=>{
+      onExclude: (v, key)=>{
         // console.log(path)
         t.deepEqual(key, matchKey.shift())
-        t.deepEqual(pkey, matchPKey.shift())
-        t.deepEqual(col, matchCol.shift())
+        t.deepEqual(v.key, matchPKey.shift())
+        t.deepEqual(v.val, matchCol.shift())
       }
     }))),
     {
@@ -766,10 +766,10 @@ test('array of $exclude', t=>{
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, pkey, path, key)=>{
+      onExclude: (v, key)=>{
         t.deepEqual(key, matchKey.shift())
-        t.deepEqual(pkey, matchPKey.shift())
-        t.deepEqual(col, matchCol.shift())
+        t.deepEqual(v.key, matchPKey.shift())
+        t.deepEqual(v.val, matchCol.shift())
       }
     }))),
     {

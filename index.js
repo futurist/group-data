@@ -205,7 +205,7 @@ function checkFactory(data, stage, currentPath) {
                   match = checkCondition(x.val[key], cond)
                   if(match){
                     // console.log(x.path, i)
-                    callback && callback(x.val, x.key, x.path, key)
+                    callback && callback(x, key)
                     return false
                   }
                 }
@@ -224,7 +224,7 @@ function checkFactory(data, stage, currentPath) {
               if(!checkCondition(path, pathCond)) return
               match = checkMatch(x.val, v.$test)
               if(match) {
-                callback && callback(x.val, x.key, x.path)
+                callback && callback(x)
                 return false
               }
               parent = x.val
