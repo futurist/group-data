@@ -196,22 +196,19 @@ function checkFactory(data, stage, currentPath) {
             let cond = v.$values
             let hintKeys = v.$keys
             let parent = null
-            let check = (key, val, x)=>{
-              // console.log( key, hintKeys, checkCondition(key, hintKeys) )
-              if(!hintKeys || checkCondition(key, hintKeys)) {
-                match = checkCondition(val, cond)
-                if(match){
-                  // console.log(x.path, i)
-                  callback && callback(x.val, x.key, x.path, key)
-                  return false
-                }
-              }
-            }
             interateDataInPath(data, currentPath, x=>{
               // for ... in will not throw if it's null
-              for(let i in x.val) {
+              for(let key in x.val) {
                 // $.keys is the hint key for match
-                if(check(i, x.val[i], x)===false) return false
+                // console.log( key, hintKeys, checkCondition(key, hintKeys) )
+                if(!hintKeys || checkCondition(key, hintKeys)) {
+                  match = checkCondition(x.val[key], cond)
+                  if(match){
+                    // console.log(x.path, i)
+                    callback && callback(x.val, x.key, x.path, key)
+                    return false
+                  }
+                }
               }
             })
             return match
