@@ -734,6 +734,7 @@ test('array of $exclude', t=>{
     a:[
       {id: 1, name:'a', b:{c:2}},
       {id: 2, name:'a', b:{c:3}},
+      {id: 21, name:'a', b:{c:3}},
       {id: 3, name:'a', b:{c:15}},
     ]
   }
@@ -741,8 +742,12 @@ test('array of $exclude', t=>{
     $unwind: '$a.$.b.c',
     $exclude: [
       {
-        $keys: 'id',
+        $keys: 'c',
         $values: 2
+      },
+      {
+        $keys: ['id'],
+        $values: 21
       },
       {
         $path: {$regex: 'b', $options: 'i'},
@@ -752,10 +757,11 @@ test('array of $exclude', t=>{
     _id:null,
     count: {$sum: 1}
   }
-  const matchKey=['id', undefined]
-  const matchPKey=['1', 'b']
+  const matchKey=['c', 'id', undefined]
+  const matchPKey=['b', '2', 'b']
   const matchCol = [
-    { id: 2, name: 'a', b: { c: 3 } },
+    { c: 2 },
+    { id: 21, name: 'a', b: { c: 3 } },
     { c: 15 },
   ]
   t.deepEqual(
