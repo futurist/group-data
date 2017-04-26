@@ -214,14 +214,11 @@ function checkFactory(data, stage, currentPath) {
 
             let match = false
             let parent = null
-            let $path = v.$path
-            const targetPath = $path || toStagePath(data, currentPath)
+            const pathCond = v.$path || toStagePath(data, currentPath)
             interateDataInPath(data, currentPath, x=>{
               const path = toStagePath(data, x.path, x.key)
               // console.log(x.val, path, targetPath, path!==targetPath)
-              if(_.is($path, 'RegExp')
-                ? !$path.test(path)
-                : path !== targetPath) return
+              if(!checkCondition(path, pathCond)) return
               match = checkMatch(x.val, v.$test)
               if(match) {
                 callback && callback(x.val, x.key, x.path)

@@ -621,7 +621,7 @@ test('$include and $exclude', t=>{
   ]
   var stage = {
     $exclude: {
-      // $path: '$$', // current path can be ignored
+      $path: '$$', // current path can be ignored
       $test: {name: 2}
     },
     $include: {$test: {qty: 10}},
