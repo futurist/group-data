@@ -75,7 +75,7 @@ function checkOne(checkVal, left, right, condObj, contextObj) {
 // }, '23'))
 
 // console.log(checkOne('sdfoij', '$regex', 'S', {$options: 'im'}))
-console.log(checkCondition('sdfoij', {'$regex': 'Ss', $options: 'im'}))
+// console.log(checkCondition('sdfoij', {'$regex': 'Ss', $options: 'im'}))
 
 // console.log(checkCondition(
 //   3
