@@ -659,14 +659,16 @@ test('$values without $keys', t=>{
     count: {$sum: 1}
   }
   const matchKey=['c', 'id']
+  const matchPKey=['b', '1']
   const matchCol = [
     { c: 2 },
     { id: 2, name: 'a', b: { c: 3 } }
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, key, path)=>{
+      onExclude: (col, pkey, path, key)=>{
         t.deepEqual(key, matchKey.shift())
+        t.deepEqual(pkey, matchPKey.shift())
         t.deepEqual(col, matchCol.shift())
       }
     }))),
@@ -699,13 +701,16 @@ test('$values with $keys', t=>{
     count: {$sum: 1}
   }
   const matchKey=['id']
+  const matchPKey=['1']
   const matchCol = [
     { id: 2, name: 'a', b: { c: 3 } },
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, key, path)=>{
+      onExclude: (col, pkey, path, key)=>{
+        // console.log(path)
         t.deepEqual(key, matchKey.shift())
+        t.deepEqual(pkey, matchPKey.shift())
         t.deepEqual(col, matchCol.shift())
       }
     }))),
@@ -743,14 +748,16 @@ test('array of $exclude', t=>{
     count: {$sum: 1}
   }
   const matchKey=['id', undefined]
+  const matchPKey=['1', 'b']
   const matchCol = [
     { id: 2, name: 'a', b: { c: 3 } },
     { c: 15 },
   ]
   t.deepEqual(
     JSON.parse(JSON.stringify(lib(data, stage, {
-      onExclude: (col, key, path)=>{
+      onExclude: (col, pkey, path, key)=>{
         t.deepEqual(key, matchKey.shift())
+        t.deepEqual(pkey, matchPKey.shift())
         t.deepEqual(col, matchCol.shift())
       }
     }))),

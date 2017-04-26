@@ -195,6 +195,7 @@ function checkFactory(data, stage, currentPath) {
             let match = false
             let cond = v.$values
             let hintKeys = v.$keys
+            let parent = null
             interateDataInPath(data, currentPath, x=>{
               // $.keys is the hint key for match
               for(let i in x.col){
@@ -202,19 +203,28 @@ function checkFactory(data, stage, currentPath) {
                 match = checkCondition(x.col[i], cond, x.col)
                 if(match){
                   // console.log(x.path, i)
-                  callback && callback(x.col, i, x.path)
+                  callback && callback(x.col, x.path.pop(), x.path, i)
                   return false
                 }
+                parent = x.col
               }
             })
             return match
           } else {
-            const theVal = getDataInPath(data, currentPath, v.$path||currentPath)[0]
-            const result = checkMatch(theVal, v.$test)
-            if(result && typeof callback=='function') {
-              callback(theVal)
-            }
-            return result
+
+            let match = false
+            let parent = null
+            interateDataInPath(data, currentPath, x=>{
+              const path = toStagePath(data, x.path, x.key)
+              if('$path' in v && path!=v.$path) return
+              match = checkMatch(x.val, v.$test)
+              if(match) {
+                callback && callback(x.val, x.key, x.path)
+                return false
+              }
+              parent = x.val
+            })
+            return match
           }
         }
       }
