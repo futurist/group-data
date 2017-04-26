@@ -621,7 +621,7 @@ test('$include and $exclude', t=>{
   ]
   var stage = {
     $exclude: {
-      $path: '$$',
+      // $path: '$$', // current path can be ignored
       $test: {name: 2}
     },
     $include: {$test: {qty: 10}},
@@ -632,7 +632,12 @@ test('$include and $exclude', t=>{
     sum: {$sum: '$$.qty'}
   }
   t.deepEqual(
-    JSON.parse(JSON.stringify(lib(data, stage))),
+    JSON.parse(JSON.stringify(lib(data, stage, {
+      onExclude: v=>{
+        // console.log(v)
+        t.deepEqual(v, { name: 2, qty: 20 })
+      }
+    }))),
     {
       '':[
         {_id: {name: 1}, sum: 10}
@@ -740,7 +745,7 @@ test('array of $exclude', t=>{
         $values: 2
       },
       {
-        $path: '$a.$.b',
+        $path: /./,
         $test: {c: 15}
       }
     ],

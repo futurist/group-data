@@ -214,9 +214,14 @@ function checkFactory(data, stage, currentPath) {
 
             let match = false
             let parent = null
+            let $path = v.$path
+            const targetPath = $path || toStagePath(data, currentPath)
             interateDataInPath(data, currentPath, x=>{
               const path = toStagePath(data, x.path, x.key)
-              if('$path' in v && path!=v.$path) return
+              // console.log(x.val, path, targetPath, path!==targetPath)
+              if(_.is($path, 'RegExp')
+                ? !$path.test(path)
+                : path !== targetPath) return
               match = checkMatch(x.val, v.$test)
               if(match) {
                 callback && callback(x.val, x.key, x.path)
@@ -246,8 +251,8 @@ function groupData(data, stage, options) {
 
     // check for include, exclude
     const checkFunc = checkFactory(data, stage, currentPath)
-    if(!checkFunc('$include', true, options.onInclude)) return
     if(checkFunc('$exclude', false, options.onExclude)) return
+    if(!checkFunc('$include', true, options.onInclude)) return
 
     createResultObj(resultObj, data, currentPath)
 
