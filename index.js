@@ -95,7 +95,7 @@ function interateDataInPath(data, currentPath, callback) {
     cur = path[i]
     if(typeof data !== 'object' || !(cur in data)) {
       callback({
-        nil: true,
+        fail: true,
         key: cur,
         path: path.slice(0,i),
         col: data
