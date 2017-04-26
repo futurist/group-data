@@ -218,6 +218,7 @@ function checkFactory(data, stage, currentPath) {
             interateDataInPath(data, currentPath, x=>{
               const path = toStagePath(data, x.path, x.key)
               // console.log(x.val, path, targetPath, path!==targetPath)
+              // console.log(path, pathCond, checkCondition(path, pathCond))
               if(!checkCondition(path, pathCond)) return
               match = checkMatch(x.val, v.$test)
               if(match) {

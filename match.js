@@ -17,7 +17,7 @@ function checkCondition(value, cond, contextObj){
     return cond.test(value)
   } else if (_.is(cond, 'Object')) {
     return Object.keys(cond).every(key=>
-      checkOne(value, key, cond[key], contextObj))
+      checkOne(value, key, cond[key], cond, contextObj))
   } else if (Array.isArray(cond)) {
     return cond.some(v=>checkCondition(value, v, contextObj))
   }
@@ -27,7 +27,8 @@ function checkCondition(value, cond, contextObj){
 // {$gt: 3}, left==$gt, right=3
 // contextObj is the object provide the dot-path of relation of checkVal
 // e.g. $gt: '$age', $age will be looked up in contextObj
-function checkOne(checkVal, left, right, contextObj) {
+function checkOne(checkVal, left, right, condObj, contextObj) {
+  condObj = condObj || {}
   const isArray = Array.isArray
   const isPrimitive = _.isPrimitive(checkVal)
   switch(left){
@@ -39,7 +40,9 @@ function checkOne(checkVal, left, right, contextObj) {
     case '$eq': return isPrimitive && checkVal === right
     case '$ne': return isPrimitive && checkVal !== right
 
-    case '$regex': return isPrimitive && _.is(right, 'RegExp') && right.test(checkVal)
+    case '$regex': return isPrimitive && _.is(right, 'RegExp')
+      ? right.test(checkVal)
+      : new RegExp(right, condObj.$options).test(checkVal)
 
     case '$mod': return isPrimitive && isArray(right) && checkVal % right[0] === right[1]
 
@@ -60,15 +63,19 @@ function checkOne(checkVal, left, right, contextObj) {
 
     case '$and': return isArray(right)
       && right.every(v=>checkCondition(checkVal, v, contextObj))
-
+    
   }
+
+  // other options always passed
+  return true
 }
 
 // console.log(checkExclude({
 //   $exclude: 23
 // }, '23'))
 
-// console.log(checkOne([13, 2], '$elemMatch', 3))
+// console.log(checkOne('sdfoij', '$regex', 'S', {$options: 'im'}))
+console.log(checkCondition('sdfoij', {'$regex': 'Ss', $options: 'im'}))
 
 // console.log(checkCondition(
 //   3

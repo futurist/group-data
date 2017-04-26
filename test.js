@@ -745,7 +745,7 @@ test('array of $exclude', t=>{
         $values: 2
       },
       {
-        $path: /./,
+        $path: {$regex: 'b', $options: 'i'},
         $test: {c: 15}
       }
     ],
