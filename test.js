@@ -782,3 +782,45 @@ test('array of $exclude', t=>{
 })
 
 
+test('empty $unwind', t=>{
+  var data = [{
+      a:5,
+      b:[{x:10}]
+    },{
+      a:6,
+    }
+  ]
+  var stage={
+    $unwind: '$$.b.$',
+    _id:null,
+    count: {$sum: 1}
+  }
+
+  var ret = lib(data, stage, {
+    skipNull: false
+  })
+
+  t.deepEqual(
+    JSON.parse(JSON.stringify(ret)),
+  {
+    '':[
+      {
+        _id:{},
+        count: 2
+      }
+    ],
+    '0.b':[
+      {
+        _id:{},
+        count: 1
+      }
+    ],
+    '1.b':[
+      {
+        _id:{},
+        count: 1
+      }
+    ],
+  })
+
+})

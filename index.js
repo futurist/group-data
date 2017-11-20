@@ -1,5 +1,6 @@
 
 var _ = require('objutil')
+var clone = require('clone')
 var {checkMatch, checkCondition} = require('./match.js')
 
 /** Helper functions */
@@ -240,15 +241,33 @@ function checkFactory(data, stage, currentPath) {
 // usage: groupData(data, stage)
 function groupData(data, stage, options) {
   options = options || {}
+  data = clone(data)
   var resultObj = {}
+  const $unwind = stage.$unwind
+  const unwindCheckPath = $unwind && $unwind.slice(1).split('.').map(v=>v=='$'?0:v)
   _.visit(data, v=>{
     const currentPath = v.path.concat(v.key)
     const _path = toStagePath(data, v.path, v.key)
 
     // console.log('-----', _path, currentPath)
-    const $unwind = stage.$unwind
+    
+    if($unwind && $unwind.indexOf(_path)==0 && _path.length<$unwind.length){
+      // ensure $unwind path exists
+      let remainPath = $unwind.slice(_path.length+1).split('.').map(v=>v=='$'?0:v)
+      let path = currentPath.concat(remainPath)
+      // ensure all remain array have 0 index
+      let obj = data
+      while(path[0]!=null){
+        let key = path.shift()
+        if(!(key in obj)){
+          obj[key]= path[0]==0?[]:{}
+        }
+        obj = obj[key]
+      }
+    }
+    
     if($unwind && _path != $unwind) return
-
+    
     // check for include, exclude
     const checkFunc = checkFactory(data, stage, currentPath)
     if(checkFunc('$exclude', false, options.onExclude)) return
@@ -284,7 +303,7 @@ function groupData(data, stage, options) {
               case '$avg':
               case '$max':
               case '$min':
-              if(!(i in entry)) entry[i] = makeArrayObject(accum, {skipNull: true})
+              if(!(i in entry)) entry[i] = makeArrayObject(accum, options)
               if(type==='string') {
                 const arr = getDataInPath(data, currentPath, keyPath)
                 entry[i].push(arr[0])

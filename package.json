@@ -4,6 +4,7 @@
   "description": "Group data like mongodb $group aggregate",
   "main": "index.js",
   "dependencies": {
+    "clone": "^2.1.1",
     "objutil": "^2.11.3"
   },
   "devDependencies": {},
