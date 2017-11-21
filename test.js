@@ -839,6 +839,7 @@ test('options.skipNull', t=>{
     $unwind: '$$.b.$',
     _id:null,
     count: {$count: '$$.b.$.x'},
+    // count: {$sum: 1},  // $sum, $count: $sum:1 not apply skipNull!
     sum: {$sum: '$$.b.$.x'},
   }
 
