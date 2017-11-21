@@ -875,3 +875,47 @@ test('options.skipNull', t=>{
   })
 
 })
+
+test('stage.$_showKeys', t=>{
+  var data = [{
+      a:5,
+      b:[{x:10}]
+    },{
+      a:6,
+      b:[{x:null}, {x:5}]
+    }
+  ]
+  var stage={
+    $unwind: '$$.b.$',
+    $_showKeys: ['', '0.b'],
+    _id:null,
+    count: {$count: '$$.b.$.x'},
+    // count: {$sum: 1},  // $sum, $count: $sum:1 not apply skipNull!
+    sum: {$sum: '$$.b.$.x'},
+  }
+
+  var ret = lib(data, stage, {
+    skipNull: true
+  })
+
+  // console.log(util.inspect(ret, null, null))
+  t.deepEqual(
+    JSON.parse(JSON.stringify(ret)),
+  {
+    '':[
+      {
+        _id:{},
+        count: 2,
+        sum: 15,
+      }
+    ],
+    '0.b':[
+      {
+        _id:{},
+        count: 1,
+        sum: 10,
+      }
+    ],
+  })
+
+})
