@@ -16,26 +16,26 @@ function arrayObjectProp (method, options) {
     toJSON: {value: function() {
       return this.valueOf()
     }},
-    _sum: {value: function() {
-      return this.reduce((prev, cur)=>{
+    $sum: {value: function() {
+      return this.$getArray().reduce((prev, cur)=>{
         return typeof cur=='number' && !isNaN(cur)
           ? prev + cur
           : prev
       }, 0)
     }},
-    _avg: {value: function() {
-      return this._sum() / this._count()
+    $avg: {value: function() {
+      return this.$sum() / this.$count()
     }},
-    _min: {value: function() {
-      return Math.min.apply(null, this._getArray())
+    $min: {value: function() {
+      return Math.min.apply(null, this.$getArray())
     }},
-    _max: {value: function() {
-      return Math.max.apply(null, this._getArray())
+    $max: {value: function() {
+      return Math.max.apply(null, this.$getArray())
     }},
-    _count: {value: function() {
-      return this._getArray().length
+    $count: {value: function() {
+      return this.$getArray().length
     }},
-    _getArray: {value: function() {
+    $getArray: {value: function() {
       return !this._options.skipNull
         ? this
         : this.filter(v=>v!=null)
@@ -45,8 +45,8 @@ function arrayObjectProp (method, options) {
 
 function makeArrayObject (method, options) {
   var arr = []
-  var _method = method.replace(/^\$/, '_')
-  Object.defineProperties(arr, arrayObjectProp(_method, options||{}))
+  // var _method = method.replace(/^\$/, '_')
+  Object.defineProperties(arr, arrayObjectProp(method, options||{}))
   return arr
 }
 
@@ -54,6 +54,9 @@ function $addToSet(arr, item) {
   if(arr.indexOf(item)<0) arr.push(item)
 }
 
+function checkValidKey(data, key){
+  return typeof data !== 'object' || data==null || !(key in data)
+}
 
 function toStagePath(data, path, name){
   // return is array: [parentPath, currentPath]
@@ -94,7 +97,7 @@ function interateDataInPath(data, currentPath, callback) {
   let path = currentPath.slice()
   for(let cur, i=0; i<path.length; i++) {
     cur = path[i]
-    if(typeof data !== 'object' || !(cur in data)) {
+    if(checkValidKey(data, cur)) {
       callback({
         fail: true,
         key: cur,
@@ -125,7 +128,7 @@ function getDataInPath(data, currentPath, targetPath) {
   while(cur=path.shift()) {
     provide = curPath.shift()
     if(cur=='$') cur = provide
-    if(typeof data !== 'object' || !(cur in data)) {
+    if(checkValidKey(data, cur)) {
       return [null, 1]
     }
     data = data[cur]
@@ -303,6 +306,7 @@ function groupData(data, stage, options) {
               case '$avg':
               case '$max':
               case '$min':
+              case '$count':
               if(!(i in entry)) entry[i] = makeArrayObject(accum, options)
               if(type==='string') {
                 const arr = getDataInPath(data, currentPath, keyPath)

@@ -1,5 +1,6 @@
 import test from 'ava'
 import lib from './'
+import util from 'util'
 
 test('example', t => {
 var data = {
@@ -819,6 +820,55 @@ test('empty $unwind', t=>{
       {
         _id:{},
         count: 1
+      }
+    ],
+  })
+
+})
+
+test('options.skipNull', t=>{
+  var data = [{
+      a:5,
+      b:[{x:10}]
+    },{
+      a:6,
+      b:[{x:null}, {x:5}]
+    }
+  ]
+  var stage={
+    $unwind: '$$.b.$',
+    _id:null,
+    count: {$count: '$$.b.$.x'},
+    sum: {$sum: '$$.b.$.x'},
+  }
+
+  var ret = lib(data, stage, {
+    skipNull: true
+  })
+
+  // console.log(util.inspect(ret, null, null))
+  t.deepEqual(
+    JSON.parse(JSON.stringify(ret)),
+  {
+    '':[
+      {
+        _id:{},
+        count: 2,
+        sum: 15,
+      }
+    ],
+    '0.b':[
+      {
+        _id:{},
+        count: 1,
+        sum: 10,
+      }
+    ],
+    '1.b':[
+      {
+        _id:{},
+        count: 1,
+        sum: 5,
       }
     ],
   })
