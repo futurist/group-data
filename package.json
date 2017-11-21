@@ -1,6 +1,6 @@
 {
   "name": "group-data",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Group data like mongodb $group aggregate",
   "main": "index.js",
   "dependencies": {
