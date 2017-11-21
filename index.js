@@ -140,10 +140,12 @@ function getDataInPath(data, currentPath, targetPath) {
 /** Main funciton */
 
 // create each level of path in resultObj
-function createResultObj(resultObj, data, path) {
+function createResultObj(resultObj, data, path, stage) {
+  const {$_showKeys} = stage
   for(let i=0; i<path.length; i++) {
     if(Array.isArray(data)) {
       let _path = path.slice(0,i).join('.')
+      if(Array.isArray($_showKeys) && $_showKeys.indexOf(_path)<0) continue
       resultObj[_path] = resultObj[_path] || []
     }
     data = data[path[i]]
@@ -186,7 +188,7 @@ function getEntry (resultObj, data, stage, currentPath){
       result.push(entry)
     }
     return entry
-  })
+  }).filter(Boolean)
 }
 
 function checkFactory(data, stage, currentPath) {
@@ -276,7 +278,7 @@ function groupData(data, stage, options) {
     if(checkFunc('$exclude', false, options.onExclude)) return
     if(!checkFunc('$include', true, options.onInclude)) return
 
-    createResultObj(resultObj, data, currentPath)
+    createResultObj(resultObj, data, currentPath, stage)
 
     const entries = getEntry(resultObj, data, stage, currentPath)
     if(!entries) return
